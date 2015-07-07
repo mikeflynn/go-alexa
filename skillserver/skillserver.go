@@ -46,18 +46,24 @@ func Run(apps map[string]EchoApplication, port string) {
 		negroni.Wrap(echoRouter),
 	))
 
-	// /* Endpoints
-	pageRouter := mux.NewRouter()
-	pageRouter.HandleFunc("/", HomePage)
-	pageRouter.HandleFunc("/about", AboutPage)
+	/*
+		// /* Endpoints
+		pageRouter := mux.NewRouter()
+		pageRouter.HandleFunc("/", HomePage)
+		pageRouter.HandleFunc("/about", AboutPage)
 
-	router.PathPrefix("/").Handler(negroni.New(
-		negroni.Wrap(pageRouter),
-	))
+		router.PathPrefix("/").Handler(negroni.New(
+			negroni.Wrap(pageRouter),
+		))
+	*/
 
 	n := negroni.Classic()
 	n.UseHandler(router)
 	n.Run(":" + port)
+}
+
+func GetEchoRequest(r *http.Request) *EchoRequest {
+	return context.Get(r, "echoRequest").(*EchoRequest)
 }
 
 func HTTPError(w http.ResponseWriter, logMsg string, err string, errCode int) {
