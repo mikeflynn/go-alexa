@@ -32,6 +32,7 @@ package main
 
 import (
 	"github.com/mikeflynn/go-alexa/skillserver"
+	"net/http"
 )
 
 var Applications = map[string]skillserver.EchoApplication{
@@ -49,7 +50,7 @@ func EchoHelloWorld(w http.ResponseWriter, r *http.Request) {
 	echoReq := skillserver.GetEchoRequest(r)
 
 	if echoReq.GetRequestType() == "IntentRequest" || echoReq.GetRequestType() == "LaunchRequest" {
-		echoResp := alexa.NewEchoResponse().OutputSpeech("Hello world from my new Echo test app!").Card("Hello World", "This is a test card.")
+		echoResp := skillserver.NewEchoResponse().OutputSpeech("Hello world from my new Echo test app!").Card("Hello World", "This is a test card.")
 
 		json, _ := echoResp.String()
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
