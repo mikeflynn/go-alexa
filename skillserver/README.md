@@ -46,7 +46,7 @@ func main() {
 }
 
 func EchoHelloWorld(w http.ResponseWriter, r *http.Request) {
-	echoReq := context.Get(r, "echoRequest").(*alexa.EchoRequest)
+	echoReq := skillserver.GetEchoRequest(r)
 
 	if echoReq.GetRequestType() == "IntentRequest" || echoReq.GetRequestType() == "LaunchRequest" {
 		echoResp := alexa.NewEchoResponse().OutputSpeech("Hello world from my new Echo test app!").Card("Hello World", "This is a test card.")
@@ -57,6 +57,13 @@ func EchoHelloWorld(w http.ResponseWriter, r *http.Request) {
 	}
 }
 ```
+
+Details:
+* You define your endpoints by creating a `map[string]skillserver.EchoApplication` and loading it with `EchoApplication` types that specify the Application ID and handler function.
+* All Skill endpoints must start with `/echo/` as that's the route grouping that has the security middleware.
+* Your handler is a regular `net/http` handler so you have full access to the request and ResponseWriter.
+* The JSON from the Echo request is already parsed for you. Grab it by calling `skillserver.GetEchoRequest(r *http.Request)`.
+* You generate the Echo Response by using the EchoResponse struct that has methods to generate each part and, when ready, to return it as a JSON string that you can send back as the response.
 
 ### The SSL Requirement
 
