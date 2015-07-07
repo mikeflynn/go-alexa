@@ -23,6 +23,41 @@ The `go-alexa/skillserver` takes care of #2 and #3 for you so you can concentrat
 
 ### An Example App
 
+Creating an Alexa Skill web service is easy with `go-alexa/skillserver`. Simply import the project as any other Go project, define your app, and write your endpoint. All the web service, security checks, and assistance in creating the response objects are done for you.
 
+Here's a simple, but complete web service example:
+
+```go
+package main
+
+import (
+	"github.com/mikeflynn/go-alexa/skillserver"
+)
+
+var Applications = map[string]skillserver.EchoApplication{
+	"/echo/helloworld": skillserver.EchoApplication{ // Route
+		AppID:   "xxxxxxxx",     // Echo App ID from Amazon Dashboard
+		Handler: EchoHelloWorld, // Handler Func
+	},
+}
+
+func main() {
+	skillserver.Run(Applications, "3000")
+}
+
+func EchoHelloWorld(w http.ResponseWriter, r *http.Request) {
+	echoReq := context.Get(r, "echoRequest").(*alexa.EchoRequest)
+
+	if echoReq.GetRequestType() == "IntentRequest" || echoReq.GetRequestType() == "LaunchRequest" {
+		echoResp := alexa.NewEchoResponse().OutputSpeech("Hello world from my new Echo test app!").Card("Hello World", "This is a test card.")
+
+		json, _ := echoResp.String()
+		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+		w.Write(json)
+	}
+}
+```
 
 ### The SSL Requirement
+
+Amazon requires an SSL connection for all steps in the Skill process, even local development (which still gets requests from the Echo web service).
