@@ -35,7 +35,7 @@ import (
 	"net/http"
 )
 
-var Applications = map[string]skillserver.EchoApplication{
+var Applications = map[string]interface{}{
 	"/echo/helloworld": skillserver.EchoApplication{ // Route
 		AppID:   "xxxxxxxx",     // Echo App ID from Amazon Dashboard
 		Handler: EchoHelloWorld, // Handler Func
@@ -60,7 +60,7 @@ func EchoHelloWorld(w http.ResponseWriter, r *http.Request) {
 ```
 
 Details:
-* You define your endpoints by creating a `map[string]skillserver.EchoApplication` and loading it with `EchoApplication` types that specify the Application ID and handler function.
+* You define your endpoints by creating a `map[string]interface{}` and loading it with `EchoApplication` types that specify the Application ID and handler function.
 * All Skill endpoints must start with `/echo/` as that's the route grouping that has the security middleware.
 * Your handler is a regular `net/http` handler so you have full access to the request and ResponseWriter.
 * The JSON from the Echo request is already parsed for you. Grab it by calling `skillserver.GetEchoRequest(r *http.Request)`.
