@@ -27,17 +27,30 @@ type EchoApplication struct {
 	Handler func(http.ResponseWriter, *http.Request)
 }
 
-var Applications = map[string]EchoApplication{}
+type StdApplication struct {
+	Methods string
+	Handler func(http.ResponseWriter, *http.Request)
+}
 
-func Run(apps map[string]EchoApplication, port string) {
+var Applications = map[string]interface{}{}
+
+func Run(apps map[string]interface{}, port string) {
 	Applications = apps
 
 	router := mux.NewRouter()
 
 	// /echo/* Endpoints
 	echoRouter := mux.NewRouter()
+	// /* Endpoints
+	pageRouter := mux.NewRouter()
+
 	for uri, meta := range Applications {
-		echoRouter.HandleFunc(uri, meta.Handler).Methods("POST")
+		switch app := meta.(type) {
+		case EchoApplication:
+			echoRouter.HandleFunc(uri, app.Handler).Methods("POST")
+		case StdApplication:
+			pageRouter.HandleFunc(uri, app.Handler).Methods(app.Methods)
+		}
 	}
 
 	router.PathPrefix("/echo/").Handler(negroni.New(
@@ -46,16 +59,9 @@ func Run(apps map[string]EchoApplication, port string) {
 		negroni.Wrap(echoRouter),
 	))
 
-	/*
-		// /* Endpoints
-		pageRouter := mux.NewRouter()
-		pageRouter.HandleFunc("/", HomePage)
-		pageRouter.HandleFunc("/about", AboutPage)
-
-		router.PathPrefix("/").Handler(negroni.New(
-			negroni.Wrap(pageRouter),
-		))
-	*/
+	router.PathPrefix("/").Handler(negroni.New(
+		negroni.Wrap(pageRouter),
+	))
 
 	n := negroni.Classic()
 	n.UseHandler(router)
@@ -90,7 +96,7 @@ func verifyJSON(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	}
 
 	// Check the app id
-	if !echoReq.VerifyAppID(Applications[r.URL.Path].AppID) {
+	if !echoReq.VerifyAppID(Applications[r.URL.Path].(EchoApplication).AppID) {
 		HTTPError(w, "Echo AppID mismatch!", "Bad Request", 400)
 		return
 	}

@@ -1,14 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"github.com/mikeflynn/go-alexa/skillserver"
 	"net/http"
 )
 
-var Applications = map[string]skillserver.EchoApplication{
+var Applications = map[string]interface{}{
 	"/echo/helloworld": skillserver.EchoApplication{ // Route
 		AppID:   "xxxxxxxx",     // Echo App ID from Amazon Dashboard
 		Handler: EchoHelloWorld, // Handler Func
+	},
+	"/": skillserver.StdApplication{
+		Methods: "GET",
+		Handler: HomePage,
 	},
 }
 
@@ -26,4 +31,8 @@ func EchoHelloWorld(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 		w.Write(json)
 	}
+}
+
+func HomePage(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "Home Page!")
 }
