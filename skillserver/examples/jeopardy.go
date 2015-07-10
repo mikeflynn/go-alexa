@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,17 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
+
+var Applications = map[string]interface{}{
+	"/echo/jeopardy": alexa.EchoApplication{
+		AppID:   os.Getenv("JEOPARDY_APP_ID"),
+		Handler: EchoJeopardy,
+	},
+}
+
+func main() {
+	alexa.Run(Applications, "3000")
+}
 
 type JeopardySession struct {
 	AWSID           string
@@ -167,7 +179,8 @@ func jeopardyCategory(echoReq *alexa.EchoRequest, session *JeopardySession) (*al
 
 	// Declare the category
 	category, err := echoReq.GetSlotValue("Category")
-	if err != nil || catNames[category] == "" {
+	_, catExists := JeopardyCategories[category]
+	if err != nil || !catExists {
 		catNames := []string{}
 		for k, _ := range JeopardyCategories {
 			catNames = append(catNames, k)
