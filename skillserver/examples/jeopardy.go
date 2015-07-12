@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/context"
+	"github.com/kennygrant/sanitize"
 	alexa "github.com/mikeflynn/go-alexa/skillserver"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -25,6 +26,7 @@ var Applications = map[string]interface{}{
 }
 
 func main() {
+	rand.Seed(time.Now().UTC().UnixNano())
 	alexa.Run(Applications, "3000")
 }
 
@@ -59,9 +61,8 @@ var JeopardyCategories = map[string]int{
 var JeopardyGreetings = []string{
 	"Sure.",
 	"Lets do it!",
-	"Hell to the yeah!",
 	"Whatever. I'm just sitting here I guess.",
-	"No. I'm busy...Just kidding.",
+	"No. I'm busy. Just kidding.",
 	"Coolio.",
 	"Lets play Jeopardy!",
 }
@@ -75,27 +76,21 @@ var JeopardyCatSelect = []string{
 }
 
 var JeopardyRightAnswer = []string{
-	"You got it!",
-	"Nice.",
-	"Bingo.",
-	"Nailed it!",
-	"Correct",
-	"That is right.",
-	"Holy crap you got it!",
+	"You got it! ",
+	"Nice. ",
+	"Bingo. ",
+	"Nailed it! ",
+	"Correct. ",
+	"That is right. ",
+	"Holy crap you got it! ",
 }
 
 var JeopardyWrongAnswer = []string{
 	"Nope.",
 	"Sorry, that's incorrect.",
-	"Wow...no...not even close.",
+	"Wow, no, not even close.",
 	"Yikes. No.",
 	"Awww, too bad.",
-}
-
-var JeopardyThinking = []string{
-	"I'm going to talk a little while and give you a chance to think about the answer. If I stop talking I need answer right away so I'll just jabber on about whatever...until...now.",
-	"While you think I'm going to sing the Who's the Boss theme song. There's a time for love and a time for living. Take a chance and face the wind! Open road and a road that's taken. A brand new life around the bend! Ok.",
-	"How long does Jeopardy give you to answer a question? Not very long but long enough for Alec to say We need an answer and then that beep beep comes in. Well, guess what?",
 }
 
 // #1: Greeting and ask for category.
@@ -127,14 +122,16 @@ func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 		w.Write(json)
 	} else if echoReq.GetRequestType() == "IntentRequest" {
-		session := getJeopardySession(col, echoReq.GetSessionID())
-
 		log.Println(echoReq.GetIntentName())
+
+		session := getJeopardySession(col, echoReq.GetSessionID())
 
 		var echoResp *alexa.EchoResponse
 
 		switch echoReq.GetIntentName() {
 		case "StartJeopardy":
+			echoResp, session = jeopardyStart(echoReq, session)
+		case "ListCategories":
 			echoResp, session = jeopardyStart(echoReq, session)
 		case "PickCategory":
 			if session.CurrentQuestion.Category == "" {
@@ -147,8 +144,18 @@ func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
 		case "AnswerQuestion":
 			echoResp, session = jeopardyAnswer(echoReq, session)
 			session.Update(col)
+		case "RepeatQuestion":
+			if session.CurrentQuestion.Question != "" {
+				echoResp = alexa.NewEchoResponse().OutputSpeech(session.CurrentQuestion.Question).EndSession(false)
+			} else {
+				echoResp = alexa.NewEchoResponse().OutputSpeech("I didn't ask a question. Please pick a category first.").EndSession(false)
+			}
 		case "QuitGame":
-			echoResp = alexa.NewEchoResponse().OutputSpeech("Ok. You ended with " + strconv.Itoa(session.Dollars) + " after " + strconv.Itoa(session.NumQuestions) + " questions.").EndSession(true)
+			noun := "questions"
+			if session.NumQuestions == 1 {
+				noun = "question"
+			}
+			echoResp = alexa.NewEchoResponse().OutputSpeech("You ended with " + strconv.Itoa(session.Dollars) + " after " + strconv.Itoa(session.NumQuestions) + " " + noun + " .").EndSession(true)
 		default:
 			echoResp = alexa.NewEchoResponse().OutputSpeech("I'm sorry, I didn't get that. Can you say that again?").EndSession(false)
 		}
@@ -167,7 +174,13 @@ func jeopardyStart(echoReq *alexa.EchoRequest, session *JeopardySession) (*alexa
 		catNames = append(catNames, k)
 	}
 
-	msg := JeopardyGreetings[rand.Intn(len(JeopardyGreetings))] + " Please pick one of the following categories: " + strings.Join(catNames, ", ")
+	msg := ""
+	if echoReq.GetIntentName() == "StartJeopardy" {
+		msg = JeopardyGreetings[rand.Intn(len(JeopardyGreetings))] + " Please pick one of the following categories: "
+	} else {
+		msg = "The categories are "
+	}
+	msg += strings.Join(catNames, ", ")
 	echoResp := alexa.NewEchoResponse().OutputSpeech(msg).EndSession(false)
 
 	return echoResp, session
@@ -202,14 +215,17 @@ func jeopardyCategory(echoReq *alexa.EchoRequest, session *JeopardySession) (*al
 		}
 	}
 
-	msg += "From " + category + " for " + strconv.Itoa(clue.Value) + ". " + clue.Question + "." + getRandom(JeopardyThinking) + " I need your answer in the form of a question!"
+	msg += "From " + category + " for " + strconv.Itoa(clue.Value) + ". " + clue.Question + ". I need your answer in the form of a question."
 
 	session.CurrentQuestion.Category = category
-	session.CurrentQuestion.Answer = clue.Answer
+	session.CurrentQuestion.Answer = sanitize.HTML(clue.Answer)
 	session.CurrentQuestion.Question = clue.Question
 	session.CurrentQuestion.Value = clue.Value
 
-	echoResp.OutputSpeech(msg).Card("Question", msg).EndSession(false)
+	log.Println(session.CurrentQuestion.Question)
+	log.Println(session.CurrentQuestion.Answer)
+
+	echoResp.OutputSpeech(msg).Card("Question", msg).Reprompt("Times up. I need your answer in the form of a question.").EndSession(false)
 
 	return echoResp, session
 }
@@ -224,6 +240,7 @@ func jeopardyAnswer(echoReq *alexa.EchoRequest, session *JeopardySession) (*alex
 	}
 
 	answer, err := echoReq.GetSlotValue("Answer")
+	log.Println(answer)
 	if err != nil {
 		echoResp.OutputSpeech("We need an answer!").EndSession(false)
 		return echoResp, session
@@ -311,6 +328,7 @@ type JServiceClue struct {
 
 func getJServiceClue(catID int) (JServiceClue, error) {
 	offset := rand.Intn(100)
+	log.Println("http://jservice.io/api/clues?category=" + strconv.Itoa(catID) + "&offset=" + strconv.Itoa(offset))
 	response, err := http.Get("http://jservice.io/api/clues?category=" + strconv.Itoa(catID) + "&offset=" + strconv.Itoa(offset))
 	if err != nil {
 		log.Println(err.Error())
