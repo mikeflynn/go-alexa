@@ -1,0 +1,38 @@
+{
+  "intents": [
+    {
+      "intent": "StartJeopardy",
+      "slots": []
+    },
+    {
+      "intent": "PickCategory",
+      "slots": [
+        {
+          "name": "Category",
+          "type": "LITERAL"
+        }
+      ]
+    },
+    {
+      "intent": "AnswerQuestion",
+      "slots": [
+        {
+          "name": "Answer",
+          "type": "LITERAL"
+        }
+      ]
+    },
+    {
+      "intent": "QuitGame",
+      "slots": []
+    },
+    {
+      "intent": "ListCategories",
+      "slots": []
+    },
+    {
+      "intent": "RepeatQuestion",
+      "slots": []
+    }
+  ]
+}

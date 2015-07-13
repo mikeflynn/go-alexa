@@ -1,0 +1,51 @@
+QuitGame goodbye
+QuitGame i'm done
+QuitGame i am done
+QuitGame game over
+QuitGame quit
+StartJeopardy lets play a game
+StartJeopardy wanna play
+StartJeopardy start a game
+StartJeopardy to start a game
+StartJeopardy play a game
+ListCategories list the categories
+ListCategories give me the categories
+ListCategories what are the categories again
+ListCategories what are the categories
+ListCategories to list the categories
+PickCategory give me a {food|Category} question
+PickCategory lets start with {hodgepodge|Category}
+PickCategory ask a {history|Category} question
+PickCategory any category
+PickCategory i will take {sports|Category}
+PickCategory i'll take {science|Category}
+PickCategory {food|Category}
+PickCategory {hodgepodge|Category}
+PickCategory {history|Category}
+PickCategory {sports|Category}
+PickCategory {science|Category}
+PickCategory {television|Category}
+PickCategory {people|Category}
+PickCategory {rhyme time|Category}
+PickCategory {pop music|Category}
+PickCategory {quotations|Category}
+PickCategory lets go with a {food|Category} question
+PickCategory how about {television|Category}
+PickCategory i'll start with {people|Category}
+PickCategory give me a {sports|Category} question
+PickCategory i'll take {sports|Category}
+RepeatQuestion can you repeat the question
+RepeatQuestion repeat the question
+RepeatQuestion say question again
+RepeatQuestion can you say the question again
+AnswerQuestion who is {abraham lincoln|Answer}
+AnswerQuestion what is a {robot|Answer}
+AnswerQuestion what is {sweet tea|Answer}
+AnswerQuestion where is {the washington monument|Answer}
+AnswerQuestion who are {the doobie brothers|Answer}
+AnswerQuestion what are {pancakes|Answer}
+AnswerQuestion where are {the rocky mountains|Answer}
+AnswerQuestion i don't know
+AnswerQuestion not sure
+AnswerQuestion no idea
+AnswerQuestion i give up
