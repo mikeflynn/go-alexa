@@ -7,6 +7,8 @@
 ### Functionality
 * "Alexa, ask Jeopardy to start a game."
 
+Jeopardy uses the amazing [jservice.io](http://jservice.io) API to pull actual Jeopardy questions and categories.
+
 ### Potential Future Enhancements:
 * Allow selection of point value when selecting the category.
 * Allow for category selection when you star the game.
