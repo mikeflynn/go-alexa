@@ -1,5 +1,7 @@
 ## Alexa Skill: Jeopardy
 
+[![Alexa Jeopardy Demo](http://i.imgur.com/1lNgQjB.png)](https://www.youtube.com/watch?v=mDIEGUtoSjw)
+
 ### Requirements
 * Compiled Go code
 * MongoDB running on localhost
