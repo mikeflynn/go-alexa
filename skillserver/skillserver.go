@@ -115,7 +115,7 @@ func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 
 	// Verify certificate URL
 	if !verifyCertURL(certURL) && devFlag == "" {
-		HTTPError(w, "", "Not Authorized", 401)
+		HTTPError(w, "Invalid cert URL.", "Not Authorized", 401)
 		return
 	}
 
