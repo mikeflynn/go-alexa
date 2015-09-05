@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -199,11 +200,17 @@ func readCert(certURL string) ([]byte, error) {
 }
 
 func verifyCertURL(path string) bool {
-	if !strings.HasSuffix(path, "/echo.api/echo-api-cert.pem") {
+	link, _ := url.Parse(path)
+
+	if link.Scheme != "https" {
 		return false
 	}
 
-	if !strings.HasPrefix(path, "https://s3.amazonaws.com/echo.api/") && !strings.HasPrefix(path, "https://s3.amazonaws.com:443/echo.api/") {
+	if link.Host != "s3.amazonaws.com" && link.Host != "s3.amazonaws.com:443" {
+		return false
+	}
+
+	if !strings.HasPrefix(link.Path, "/echo.api/") {
 		return false
 	}
 
