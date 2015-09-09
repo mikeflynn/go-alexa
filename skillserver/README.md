@@ -13,7 +13,7 @@ You can see the SDK documentation here: [developer.amazon.com/public/solutions/a
 Amazon has a list of requirements to get a new Skill up and running
 
 1. Creating your new Skill on their Development Dashboard populating it with details and example phrases. That process is documented here: [developer.amazon.com/appsandservices/solutions/alexa/alexa-skills-kit/docs/defining-the-voice-interface](https://developer.amazon.com/appsandservices/solutions/alexa/alexa-skills-kit/docs/defining-the-voice-interface)
-2. A lengthy request validation proces. Documented here: 
+2. A lengthy request validation proces. Documented here: [developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/developing-an-alexa-skill-as-a-web-service](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/developing-an-alexa-skill-as-a-web-service) 
 3. A formatted JSON response.
 4. SSL connection required, even for development.
 
