@@ -88,9 +88,9 @@ func (this *EchoResponse) OutputSpeachSSML(text string) *EchoResponse {
 
 func (this *EchoResponse) Card(title string, content string) *EchoResponse {
 	this.Response.Card = &EchoRespPayload{
-		Type:  "Simple",
-		Title: title,
-		Text:  content,
+		Type:    "Simple",
+		Title:   title,
+		Content: content,
 	}
 
 	return this
