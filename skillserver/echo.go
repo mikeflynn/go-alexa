@@ -77,11 +77,20 @@ func (this *EchoResponse) OutputSpeech(text string) *EchoResponse {
 	return this
 }
 
+func (this *EchoResponse) OutputSpeachSSML(text string) *EchoResponse {
+	this.Response.OutputSpeech = &EchoRespPayload{
+		Type: "SSML",
+		SSML: text,
+	}
+
+	return this
+}
+
 func (this *EchoResponse) Card(title string, content string) *EchoResponse {
 	this.Response.Card = &EchoRespPayload{
-		Type:  "Simple",
-		Title: title,
-		Text:  content,
+		Type:    "Simple",
+		Title:   title,
+		Content: content,
 	}
 
 	return this
@@ -176,5 +185,6 @@ type EchoRespPayload struct {
 	Type    string `json:"type,omitempty"`
 	Title   string `json:"title,omitempty"`
 	Text    string `json:"text,omitempty"`
+	SSML    string `json:"ssml,omitempty"`
 	Content string `json:"content,omitempty"`
 }
