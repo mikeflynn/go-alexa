@@ -140,7 +140,8 @@ type EchoSession struct {
 		String map[string]interface{} `json:"string"`
 	} `json:"attributes"`
 	User struct {
-		UserID string `json:"string"`
+		UserID      string `json:"userId"`
+		AccessToken string `json:"accessToken,omitempty"`
 	} `json:"user"`
 }
 
