@@ -77,7 +77,7 @@ func (this *EchoResponse) OutputSpeech(text string) *EchoResponse {
 	return this
 }
 
-func (this *EchoResponse) OutputSpeachSSML(text string) *EchoResponse {
+func (this *EchoResponse) OutputSpeechSSML(text string) *EchoResponse {
 	this.Response.OutputSpeech = &EchoRespPayload{
 		Type: "SSML",
 		SSML: text,
