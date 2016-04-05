@@ -87,10 +87,32 @@ func (this *EchoResponse) OutputSpeechSSML(text string) *EchoResponse {
 }
 
 func (this *EchoResponse) Card(title string, content string) *EchoResponse {
+	return this.SimpleCard(title, content)
+}
+
+func (this *EchoResponse) SimpleCard(title string, content string) *EchoResponse {
 	this.Response.Card = &EchoRespPayload{
 		Type:    "Simple",
 		Title:   title,
 		Content: content,
+	}
+
+	return this
+}
+
+func (this *EchoResponse) StandardCard(title string, content string, smallImg string, largeImg string) *EchoResponse {
+	this.Response.Card = &EchoRespPayload{
+		Type:    "Standard",
+		Title:   title,
+		Content: content,
+	}
+
+	if smallImg != "" {
+		this.Response.Card.Image.SmallImageURL = smallImg
+	}
+
+	if largeImg != "" {
+		this.Response.Card.Image.LargeImageURL = largeImg
 	}
 
 	return this
@@ -182,10 +204,16 @@ type EchoReprompt struct {
 	OutputSpeech EchoRespPayload `json:"outputSpeech,omitempty"`
 }
 
+type EchoRespImage struct {
+	SmallImageURL string `json:"smallImageUrl,omitempty"`
+	LargeImageURL string `json:"largeImageUrl,omitempty"`
+}
+
 type EchoRespPayload struct {
-	Type    string `json:"type,omitempty"`
-	Title   string `json:"title,omitempty"`
-	Text    string `json:"text,omitempty"`
-	SSML    string `json:"ssml,omitempty"`
-	Content string `json:"content,omitempty"`
+	Type    string        `json:"type,omitempty"`
+	Title   string        `json:"title,omitempty"`
+	Text    string        `json:"text,omitempty"`
+	SSML    string        `json:"ssml,omitempty"`
+	Content string        `json:"content,omitempty"`
+	Image   EchoRespImage `json:"image,omitempty"`
 }
