@@ -24,8 +24,11 @@ import (
 )
 
 type EchoApplication struct {
-	AppID   string
-	Handler func(http.ResponseWriter, *http.Request)
+	AppID          string
+	Handler        func(http.ResponseWriter, *http.Request)
+	OnLaunch       func(*EchoRequest, *EchoResponse)
+	OnIntent       func(*EchoRequest, *EchoResponse)
+	OnSessionEnded func(*EchoRequest, *EchoResponse)
 }
 
 type StdApplication struct {
@@ -48,7 +51,36 @@ func Run(apps map[string]interface{}, port string) {
 	for uri, meta := range Applications {
 		switch app := meta.(type) {
 		case EchoApplication:
-			echoRouter.HandleFunc(uri, app.Handler).Methods("POST")
+			handlerFunc := func(w http.ResponseWriter, r *http.Request) {
+				echoReq := context.Get(r, "echoRequest").(*EchoRequest)
+				var echoResp *EchoResponse
+
+				if echoReq.GetRequestType() == "LaunchRequest" {
+					if app.OnLaunch != nil {
+						app.OnLaunch(echoReq, echoResp)
+					}
+				} else if echoReq.GetRequestType() == "IntentRequest" {
+					if app.OnIntent != nil {
+						app.OnIntent(echoReq, echoResp)
+					}
+				} else if echoReq.GetRequestType() == "SessionEndedRequest" {
+					if app.OnSessionEnded != nil {
+						app.OnSessionEnded(echoReq, echoResp)
+					}
+				} else {
+					http.Error(w, "Invalid request.", http.StatusBadRequest)
+				}
+
+				json, _ := echoResp.String()
+				w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+				w.Write(json)
+			}
+
+			if app.Handler != nil {
+				handlerFunc = app.Handler
+			}
+
+			echoRouter.HandleFunc(uri, handlerFunc).Methods("POST")
 		case StdApplication:
 			pageRouter.HandleFunc(uri, app.Handler).Methods(app.Methods)
 		}
