@@ -53,7 +53,7 @@ func Run(apps map[string]interface{}, port string) {
 		case EchoApplication:
 			handlerFunc := func(w http.ResponseWriter, r *http.Request) {
 				echoReq := context.Get(r, "echoRequest").(*EchoRequest)
-				var echoResp *EchoResponse
+				echoResp := NewEchoResponse()
 
 				if echoReq.GetRequestType() == "LaunchRequest" {
 					if app.OnLaunch != nil {
