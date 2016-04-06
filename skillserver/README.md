@@ -2,6 +2,9 @@
 
 A simple Go framework to quickly create an Amazon Alexa Skills web service.
 
+### Updates
+4/5/16: After taking a few good addtions from the community recently, I also just added new hooks that make it even easier to get going since you don't have to write a full `net/http` handler (see the new Hello World below)!
+
 ### What?
 
 After beta testing the Amazon Echo (and it's voice assistant Alexa) for several months, Amazon has released the product to the public and created an SDK for developers to add new "Alexa Skills" to the product.
@@ -31,40 +34,33 @@ Here's a simple, but complete web service example:
 package main
 
 import (
-	"github.com/mikeflynn/go-alexa/skillserver"
-	"net/http"
+	alexa "github.com/mikeflynn/go-alexa/skillserver"
 )
 
 var Applications = map[string]interface{}{
-	"/echo/helloworld": skillserver.EchoApplication{ // Route
-		AppID:   "xxxxxxxx",     // Echo App ID from Amazon Dashboard
-		Handler: EchoHelloWorld, // Handler Func
+	"/echo/helloworld": alexa.EchoApplication{ // Route
+		AppID:    "xxxxxxxx", // Echo App ID from Amazon Dashboard
+		OnIntent: EchoIntentHandler,
+		OnLaunch: EchoIntentHandler,
 	},
 }
 
 func main() {
-	skillserver.Run(Applications, "3000")
+	alexa.Run(Applications, "3000")
 }
 
-func EchoHelloWorld(w http.ResponseWriter, r *http.Request) {
-	echoReq := skillserver.GetEchoRequest(r)
-
-	if echoReq.GetRequestType() == "IntentRequest" || echoReq.GetRequestType() == "LaunchRequest" {
-		echoResp := skillserver.NewEchoResponse().OutputSpeech("Hello world from my new Echo test app!").Card("Hello World", "This is a test card.")
-
-		json, _ := echoResp.String()
-		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-		w.Write(json)
-	}
+func EchoIntentHandler(echoReq *alexa.EchoRequest, echoResp *alexa.EchoResponse) {
+	echoResp.OutputSpeech("Hello world from my new Echo test app!").Card("Hello World", "This is a test card.")
 }
 ```
 
 Details:
 * You define your endpoints by creating a `map[string]interface{}` and loading it with `EchoApplication` types that specify the Application ID and handler function.
 * All Skill endpoints must start with `/echo/` as that's the route grouping that has the security middleware.
-* Your handler is a regular `net/http` handler so you have full access to the request and ResponseWriter.
+* The easiest way to get started is define handler functions by using `OnIntent`, `OnLaunch`, or `OnSessionEnded` that take an EchoRequest and an EchoResponse.
+* ...but if you want full control you can still use the `EchoApplication.Handler` hook to write a regular `net/http` handler so you have full access to the request and ResponseWriter.
 * The JSON from the Echo request is already parsed for you. Grab it by calling `skillserver.GetEchoRequest(r *http.Request)`.
-* You generate the Echo Response by using the EchoResponse struct that has methods to generate each part and, when ready, to return it as a JSON string that you can send back as the response.
+* You generate the Echo Response by using the EchoResponse struct that has methods to generate each part and that's it! ...unless you use the `EchoApplication.Handler` hook. In that case you need to write your JSON to the string with the `EchoResponse.toString()` method.
 
 ### The SSL Requirement
 
