@@ -12,6 +12,7 @@ Amazon has supplied packages for Java and Node.js (tied to the AWS Lamda platfor
 ### Future Proposed Tools
 
 * An Amazon Echo request simulator
+* A library for Alexa responses
 
 ### Contributors
 
