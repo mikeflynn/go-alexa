@@ -39,9 +39,16 @@ type StdApplication struct {
 var Applications = map[string]interface{}{}
 
 func Run(apps map[string]interface{}, port string) {
-	Applications = apps
-
 	router := mux.NewRouter()
+	Init(apps, router)
+
+	n := negroni.Classic()
+	n.UseHandler(router)
+	n.Run(":" + port)
+}
+
+func Init(apps map[string]interface{}, router *mux.Router) {
+	Applications = apps
 
 	// /echo/* Endpoints
 	echoRouter := mux.NewRouter()
@@ -95,10 +102,6 @@ func Run(apps map[string]interface{}, port string) {
 	router.PathPrefix("/").Handler(negroni.New(
 		negroni.Wrap(pageRouter),
 	))
-
-	n := negroni.Classic()
-	n.UseHandler(router)
-	n.Run(":" + port)
 }
 
 func GetEchoRequest(r *http.Request) *EchoRequest {
