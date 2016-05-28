@@ -118,6 +118,14 @@ func (this *EchoResponse) StandardCard(title string, content string, smallImg st
 	return this
 }
 
+func (this *EchoResponse) LinkAccountCard() *EchoResponse {
+	this.Response.Card = &EchoRespPayload{
+		Type: "LinkAccount",
+	}
+
+	return this
+}
+
 func (this *EchoResponse) Reprompt(text string) *EchoResponse {
 	this.Response.Reprompt = &EchoReprompt{
 		OutputSpeech: EchoRespPayload{
