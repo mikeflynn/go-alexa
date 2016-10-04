@@ -3,6 +3,8 @@
 A simple Go framework to quickly create an Amazon Alexa Skills web service.
 
 ### Updates
+10/3/16: Go 1.7 is required now as `go-alexa` uses the new core context library. It's not ideal to require 1.7, but with Go's no breaking changes promise it should be an easy upgrade for the vast majority of projects out there and it's better to keep up with the current release. If this change causes any issues, please reach out with an issue.
+
 4/5/16: After taking a few good addtions from the community recently, I also just added new hooks that make it even easier to get going since you don't have to write a full `net/http` handler (see the new Hello World below)!
 
 ### What?
