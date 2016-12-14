@@ -147,74 +147,76 @@ func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 	// Check for debug bypass flag
 	devFlag := r.URL.Query().Get("_dev")
 
-	certURL := r.Header.Get("SignatureCertChainUrl")
+	isDev := devFlag != ""
 
-	// Verify certificate URL
-	if !verifyCertURL(certURL) && devFlag == "" {
-		HTTPError(w, "Invalid cert URL: "+certURL, "Not Authorized", 401)
-		return
-	}
+	if !isDev {
+		certURL := r.Header.Get("SignatureCertChainUrl")
 
-	// Fetch certificate data
-	certContents, err := readCert(certURL)
-	if err != nil && devFlag == "" {
-		HTTPError(w, err.Error(), "Not Authorized", 401)
-		return
-	}
+		// Verify certificate URL
+		if !verifyCertURL(certURL) && devFlag == "" {
+			HTTPError(w, "Invalid cert URL: "+certURL, "Not Authorized", 401)
+			return
+		}
 
-	// Decode certificate data
-	block, _ := pem.Decode(certContents)
-	if block == nil && devFlag == "" {
-		HTTPError(w, "Failed to parse certificate PEM.", "Not Authorized", 401)
-		return
-	}
+		// Fetch certificate data
+		certContents, err := readCert(certURL)
+		if err != nil {
+			HTTPError(w, err.Error(), "Not Authorized", 401)
+			return
+		}
 
-	cert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil && devFlag == "" {
-		HTTPError(w, err.Error(), "Not Authorized", 401)
-		return
-	}
+		// Decode certificate data
+		block, _ := pem.Decode(certContents)
+		if block == nil {
+			HTTPError(w, "Failed to parse certificate PEM.", "Not Authorized", 401)
+			return
+		}
 
-	// Check the certificate date
-	if time.Now().Unix() < cert.NotBefore.Unix() || time.Now().Unix() > cert.NotAfter.Unix() {
-		if devFlag == "" {
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			HTTPError(w, err.Error(), "Not Authorized", 401)
+			return
+		}
+
+		// Check the certificate date
+		if time.Now().Unix() < cert.NotBefore.Unix() || time.Now().Unix() > cert.NotAfter.Unix() {
 			HTTPError(w, "Amazon certificate expired.", "Not Authorized", 401)
 			return
 		}
-	}
 
-	// Check the certificate alternate names
-	foundName := false
-	for _, altName := range cert.Subject.Names {
-		if altName.Value == "echo-api.amazon.com" {
-			foundName = true
+		// Check the certificate alternate names
+		foundName := false
+		for _, altName := range cert.Subject.Names {
+			if altName.Value == "echo-api.amazon.com" {
+				foundName = true
+			}
 		}
-	}
 
-	if !foundName && devFlag == "" {
-		HTTPError(w, "Amazon certificate invalid.", "Not Authorized", 401)
-		return
-	}
+		if !foundName && devFlag == "" {
+			HTTPError(w, "Amazon certificate invalid.", "Not Authorized", 401)
+			return
+		}
 
-	// Verify the key
-	publicKey := cert.PublicKey
-	encryptedSig, _ := base64.StdEncoding.DecodeString(r.Header.Get("Signature"))
+		// Verify the key
+		publicKey := cert.PublicKey
+		encryptedSig, _ := base64.StdEncoding.DecodeString(r.Header.Get("Signature"))
 
-	// Make the request body SHA1 and verify the request with the public key
-	var bodyBuf bytes.Buffer
-	hash := sha1.New()
-	_, err = io.Copy(hash, io.TeeReader(r.Body, &bodyBuf))
-	if err != nil {
-		HTTPError(w, err.Error(), "Internal Error", 500)
-		return
-	}
-	//log.Println(bodyBuf.String())
-	r.Body = ioutil.NopCloser(&bodyBuf)
+		// Make the request body SHA1 and verify the request with the public key
+		var bodyBuf bytes.Buffer
+		hash := sha1.New()
+		_, err = io.Copy(hash, io.TeeReader(r.Body, &bodyBuf))
+		if err != nil {
+			HTTPError(w, err.Error(), "Internal Error", 500)
+			return
+		}
+		//log.Println(bodyBuf.String())
+		r.Body = ioutil.NopCloser(&bodyBuf)
 
-	err = rsa.VerifyPKCS1v15(publicKey.(*rsa.PublicKey), crypto.SHA1, hash.Sum(nil), encryptedSig)
-	if err != nil && devFlag == "" {
-		HTTPError(w, "Signature match failed.", "Not Authorized", 401)
-		return
+		err = rsa.VerifyPKCS1v15(publicKey.(*rsa.PublicKey), crypto.SHA1, hash.Sum(nil), encryptedSig)
+		if err != nil {
+			HTTPError(w, "Signature match failed.", "Not Authorized", 401)
+			return
+		}
 	}
 
 	next(w, r)
