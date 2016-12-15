@@ -18,90 +18,52 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/codegangsta/negroni"
-	"github.com/gorilla/mux"
 )
 
 type EchoApplication struct {
 	AppID          string
-	Handler        func(http.ResponseWriter, *http.Request)
+	handler        func(http.ResponseWriter, *http.Request)
 	OnLaunch       func(*EchoRequest, *EchoResponse)
 	OnIntent       func(*EchoRequest, *EchoResponse)
 	OnSessionEnded func(*EchoRequest, *EchoResponse)
 }
 
-type StdApplication struct {
-	Methods string
-	Handler func(http.ResponseWriter, *http.Request)
+func NewSkillHandler(appId string) *EchoApplication {
+	app := &EchoApplication{
+		AppID: appId,
+	}
+	app.handler = validateRequest(verifyJSON(appId, app.handle))
+
+	return app
 }
 
-var Applications = map[string]interface{}{}
+func (app *EchoApplication) handle(w http.ResponseWriter, r *http.Request) {
+	echoReq := r.Context().Value("echoRequest").(*EchoRequest)
+	echoResp := NewEchoResponse()
 
-func Run(apps map[string]interface{}, port string) {
-	router := mux.NewRouter()
-	Init(apps, router)
-
-	n := negroni.Classic()
-	n.UseHandler(router)
-	n.Run(":" + port)
-}
-
-func Init(apps map[string]interface{}, router *mux.Router) {
-	Applications = apps
-
-	// /echo/* Endpoints
-	echoRouter := mux.NewRouter()
-	// /* Endpoints
-	pageRouter := mux.NewRouter()
-
-	for uri, meta := range Applications {
-		switch app := meta.(type) {
-		case EchoApplication:
-			handlerFunc := func(w http.ResponseWriter, r *http.Request) {
-				echoReq := r.Context().Value("echoRequest").(*EchoRequest)
-				echoResp := NewEchoResponse()
-
-				if echoReq.GetRequestType() == "LaunchRequest" {
-					if app.OnLaunch != nil {
-						app.OnLaunch(echoReq, echoResp)
-					}
-				} else if echoReq.GetRequestType() == "IntentRequest" {
-					if app.OnIntent != nil {
-						app.OnIntent(echoReq, echoResp)
-					}
-				} else if echoReq.GetRequestType() == "SessionEndedRequest" {
-					if app.OnSessionEnded != nil {
-						app.OnSessionEnded(echoReq, echoResp)
-					}
-				} else {
-					http.Error(w, "Invalid request.", http.StatusBadRequest)
-				}
-
-				json, _ := echoResp.String()
-				w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-				w.Write(json)
-			}
-
-			if app.Handler != nil {
-				handlerFunc = app.Handler
-			}
-
-			echoRouter.HandleFunc(uri, handlerFunc).Methods("POST")
-		case StdApplication:
-			pageRouter.HandleFunc(uri, app.Handler).Methods(app.Methods)
+	if echoReq.GetRequestType() == "LaunchRequest" {
+		if app.OnLaunch != nil {
+			app.OnLaunch(echoReq, echoResp)
 		}
+	} else if echoReq.GetRequestType() == "IntentRequest" {
+		if app.OnIntent != nil {
+			app.OnIntent(echoReq, echoResp)
+		}
+	} else if echoReq.GetRequestType() == "SessionEndedRequest" {
+		if app.OnSessionEnded != nil {
+			app.OnSessionEnded(echoReq, echoResp)
+		}
+	} else {
+		http.Error(w, "Invalid request.", http.StatusBadRequest)
 	}
 
-	router.PathPrefix("/echo/").Handler(negroni.New(
-		negroni.HandlerFunc(validateRequest),
-		negroni.HandlerFunc(verifyJSON),
-		negroni.Wrap(echoRouter),
-	))
+	json, _ := echoResp.String()
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	w.Write(json)
+}
 
-	router.PathPrefix("/").Handler(negroni.New(
-		negroni.Wrap(pageRouter),
-	))
+func (app *EchoApplication) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	app.handler(w, r)
 }
 
 func GetEchoRequest(r *http.Request) *EchoRequest {
@@ -117,109 +79,114 @@ func HTTPError(w http.ResponseWriter, logMsg string, err string, errCode int) {
 }
 
 // Decode the JSON request and verify it.
-func verifyJSON(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	var echoReq *EchoRequest
-	err := json.NewDecoder(r.Body).Decode(&echoReq)
-	if err != nil {
-		HTTPError(w, err.Error(), "Bad Request", 400)
-		return
+func verifyJSON(appId string, next http.HandlerFunc) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var echoReq *EchoRequest
+		err := json.NewDecoder(r.Body).Decode(&echoReq)
+		if err != nil {
+			HTTPError(w, err.Error(), "Bad Request", 400)
+			return
+		}
+
+		// Check the timestamp
+		if !echoReq.VerifyTimestamp() && r.URL.Query().Get("_dev") == "" {
+			HTTPError(w, "Request too old to continue (>150s).", "Bad Request", 400)
+			return
+		}
+
+		// Check the app id
+		if !echoReq.VerifyAppID(appId) {
+			HTTPError(w, "Echo AppID mismatch!", "Bad Request", 400)
+			return
+		}
+
+		r = r.WithContext(context.WithValue(r.Context(), "echoRequest", echoReq))
+
+		next(w, r)
 	}
-
-	// Check the timestamp
-	if !echoReq.VerifyTimestamp() && r.URL.Query().Get("_dev") == "" {
-		HTTPError(w, "Request too old to continue (>150s).", "Bad Request", 400)
-		return
-	}
-
-	// Check the app id
-	if !echoReq.VerifyAppID(Applications[r.URL.Path].(EchoApplication).AppID) {
-		HTTPError(w, "Echo AppID mismatch!", "Bad Request", 400)
-		return
-	}
-
-	r = r.WithContext(context.WithValue(r.Context(), "echoRequest", echoReq))
-
-	next(w, r)
 }
 
 // Run all mandatory Amazon security checks on the request.
-func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	// Check for debug bypass flag
-	devFlag := r.URL.Query().Get("_dev")
+func validateRequest(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Check for debug bypass flag
+		devFlag := r.URL.Query().Get("_dev")
 
-	isDev := devFlag != ""
+		isDev := devFlag != ""
 
-	if !isDev {
-		certURL := r.Header.Get("SignatureCertChainUrl")
+		if !isDev {
+			certURL := r.Header.Get("SignatureCertChainUrl")
 
-		// Verify certificate URL
-		if !verifyCertURL(certURL) && devFlag == "" {
-			HTTPError(w, "Invalid cert URL: "+certURL, "Not Authorized", 401)
-			return
-		}
+			// Verify certificate URL
+			if !verifyCertURL(certURL) && devFlag == "" {
+				HTTPError(w, "Invalid cert URL: "+certURL, "Not Authorized", 401)
+				return
+			}
 
-		// Fetch certificate data
-		certContents, err := readCert(certURL)
-		if err != nil {
-			HTTPError(w, err.Error(), "Not Authorized", 401)
-			return
-		}
+			// Fetch certificate data
+			certContents, err := readCert(certURL)
+			if err != nil {
+				HTTPError(w, err.Error(), "Not Authorized", 401)
+				return
+			}
 
-		// Decode certificate data
-		block, _ := pem.Decode(certContents)
-		if block == nil {
-			HTTPError(w, "Failed to parse certificate PEM.", "Not Authorized", 401)
-			return
-		}
+			// Decode certificate data
+			block, _ := pem.Decode(certContents)
+			if block == nil {
+				HTTPError(w, "Failed to parse certificate PEM.", "Not Authorized", 401)
+				return
+			}
 
-		cert, err := x509.ParseCertificate(block.Bytes)
-		if err != nil {
-			HTTPError(w, err.Error(), "Not Authorized", 401)
-			return
-		}
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				HTTPError(w, err.Error(), "Not Authorized", 401)
+				return
+			}
 
-		// Check the certificate date
-		if time.Now().Unix() < cert.NotBefore.Unix() || time.Now().Unix() > cert.NotAfter.Unix() {
-			HTTPError(w, "Amazon certificate expired.", "Not Authorized", 401)
-			return
-		}
+			// Check the certificate date
+			if time.Now().Unix() < cert.NotBefore.Unix() || time.Now().Unix() > cert.NotAfter.Unix() {
+				HTTPError(w, "Amazon certificate expired.", "Not Authorized", 401)
+				return
+			}
 
-		// Check the certificate alternate names
-		foundName := false
-		for _, altName := range cert.Subject.Names {
-			if altName.Value == "echo-api.amazon.com" {
-				foundName = true
+			// Check the certificate alternate names
+			foundName := false
+			for _, altName := range cert.Subject.Names {
+				if altName.Value == "echo-api.amazon.com" {
+					foundName = true
+				}
+			}
+
+			if !foundName && devFlag == "" {
+				HTTPError(w, "Amazon certificate invalid.", "Not Authorized", 401)
+				return
+			}
+
+			// Verify the key
+			publicKey := cert.PublicKey
+			encryptedSig, _ := base64.StdEncoding.DecodeString(r.Header.Get("Signature"))
+
+			// Make the request body SHA1 and verify the request with the public key
+			var bodyBuf bytes.Buffer
+			hash := sha1.New()
+			_, err = io.Copy(hash, io.TeeReader(r.Body, &bodyBuf))
+			if err != nil {
+				HTTPError(w, err.Error(), "Internal Error", 500)
+				return
+			}
+			//log.Println(bodyBuf.String())
+			r.Body = ioutil.NopCloser(&bodyBuf)
+
+			err = rsa.VerifyPKCS1v15(publicKey.(*rsa.PublicKey), crypto.SHA1, hash.Sum(nil), encryptedSig)
+			if err != nil {
+				HTTPError(w, "Signature match failed.", "Not Authorized", 401)
+				return
 			}
 		}
-
-		if !foundName && devFlag == "" {
-			HTTPError(w, "Amazon certificate invalid.", "Not Authorized", 401)
-			return
-		}
-
-		// Verify the key
-		publicKey := cert.PublicKey
-		encryptedSig, _ := base64.StdEncoding.DecodeString(r.Header.Get("Signature"))
-
-		// Make the request body SHA1 and verify the request with the public key
-		var bodyBuf bytes.Buffer
-		hash := sha1.New()
-		_, err = io.Copy(hash, io.TeeReader(r.Body, &bodyBuf))
-		if err != nil {
-			HTTPError(w, err.Error(), "Internal Error", 500)
-			return
-		}
-		//log.Println(bodyBuf.String())
-		r.Body = ioutil.NopCloser(&bodyBuf)
-
-		err = rsa.VerifyPKCS1v15(publicKey.(*rsa.PublicKey), crypto.SHA1, hash.Sum(nil), encryptedSig)
-		if err != nil {
-			HTTPError(w, "Signature match failed.", "Not Authorized", 401)
-			return
-		}
+		next(w, r)
 	}
 
-	next(w, r)
 }
 
 func readCert(certURL string) ([]byte, error) {
