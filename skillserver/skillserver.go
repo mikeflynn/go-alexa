@@ -41,12 +41,6 @@ func (app *EchoApplication) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.handler(w, r)
 }
 
-func (app *EchoApplication) ChainFunc(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		app.ServeHTTP(w, r)
-	}
-}
-
 func (app *EchoApplication) handle(w http.ResponseWriter, r *http.Request) {
 	echoReq := r.Context().Value("echoRequest").(*EchoRequest)
 	echoResp := NewEchoResponse()
