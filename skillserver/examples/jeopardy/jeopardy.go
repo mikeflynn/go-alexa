@@ -6,28 +6,24 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gorilla/context"
 	"github.com/kennygrant/sanitize"
 	alexa "github.com/mikeflynn/go-alexa/skillserver"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-var Applications = map[string]interface{}{
-	"/echo/jeopardy": alexa.EchoApplication{
-		AppID:   os.Getenv("JEOPARDY_APP_ID"),
-		Handler: EchoJeopardy,
-	},
-}
-
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
-	alexa.Run(Applications, "3000")
+
+	jeopardyHandler := alexa.ValidateRequest(alexa.VerifyJSON("xxxxx", EchoJeopardy))
+
+	http.HandleFunc("/echo/jeopardy", jeopardyHandler)
+
+	http.ListenAndServe(":3000", nil)
 }
 
 type JeopardySession struct {
@@ -99,7 +95,7 @@ var JeopardyWrongAnswer = []string{
 // #4: Give current score and list categories.
 
 func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
-	echoReq := context.Get(r, "echoRequest").(*alexa.EchoRequest)
+	echoReq := alexa.GetEchoRequest(r)
 
 	// Start up Mongo!
 	mongodb, err := mgo.Dial("localhost")

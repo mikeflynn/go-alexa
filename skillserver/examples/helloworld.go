@@ -2,18 +2,16 @@ package main
 
 import (
 	alexa "github.com/mikeflynn/go-alexa/skillserver"
+	"log"
+	"net/http"
 )
 
-var Applications = map[string]interface{}{
-	"/echo/helloworld": alexa.EchoApplication{ // Route
-		AppID:    "xxxxxxxx", // Echo App ID from Amazon Dashboard
-		OnIntent: EchoIntentHandler,
-		OnLaunch: EchoIntentHandler,
-	},
-}
-
 func main() {
-	alexa.Run(Applications, "3000")
+	echoApp := alexa.NewSkillHandler("xxxxxxx")
+	echoApp.OnIntent = EchoIntentHandler
+	echoApp.OnLaunch = EchoIntentHandler
+	http.Handle("/echo/helloworld", echoApp)
+	log.Fatalf("Stopped listening: %+v", http.ListenAndServe(":8080", nil))
 }
 
 func EchoIntentHandler(echoReq *alexa.EchoRequest, echoResp *alexa.EchoResponse) {
