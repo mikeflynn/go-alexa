@@ -32,9 +32,19 @@ func NewSkillHandler(appId string) *EchoApplication {
 	app := &EchoApplication{
 		AppID: appId,
 	}
-	app.handler = validateRequest(verifyJSON(appId, app.handle))
+	app.handler = ValidateRequest(VerifyJSON(appId, app.handle))
 
 	return app
+}
+
+func (app *EchoApplication) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	app.handler(w, r)
+}
+
+func (app *EchoApplication) ChainFunc(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		app.ServeHTTP(w, r)
+	}
 }
 
 func (app *EchoApplication) handle(w http.ResponseWriter, r *http.Request) {
@@ -60,10 +70,7 @@ func (app *EchoApplication) handle(w http.ResponseWriter, r *http.Request) {
 	json, _ := echoResp.String()
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.Write(json)
-}
 
-func (app *EchoApplication) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	app.handler(w, r)
 }
 
 func GetEchoRequest(r *http.Request) *EchoRequest {
@@ -79,7 +86,7 @@ func HTTPError(w http.ResponseWriter, logMsg string, err string, errCode int) {
 }
 
 // Decode the JSON request and verify it.
-func verifyJSON(appId string, next http.HandlerFunc) http.HandlerFunc {
+func VerifyJSON(appId string, next http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var echoReq *EchoRequest
@@ -108,7 +115,7 @@ func verifyJSON(appId string, next http.HandlerFunc) http.HandlerFunc {
 }
 
 // Run all mandatory Amazon security checks on the request.
-func validateRequest(next http.HandlerFunc) http.HandlerFunc {
+func ValidateRequest(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check for debug bypass flag
 		devFlag := r.URL.Query().Get("_dev")
