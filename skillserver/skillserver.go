@@ -47,6 +47,14 @@ func Run(apps map[string]interface{}, port string) {
 	n.Run(":" + port)
 }
 
+func RunSSL(apps map[string]interface{}, port, cert, key string) error {
+	router := mux.NewRouter()
+	Init(apps, router)
+
+	err := http.ListenAndServeTLS(port, cert, key, router)
+	return err
+}
+
 func Init(apps map[string]interface{}, router *mux.Router) {
 	Applications = apps
 
