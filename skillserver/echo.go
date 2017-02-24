@@ -137,6 +137,17 @@ func (this *EchoResponse) Reprompt(text string) *EchoResponse {
 	return this
 }
 
+func (this *EchoResponse) RepromptSSML(text string) *EchoResponse {
+	this.Response.Reprompt = &EchoReprompt{
+		OutputSpeech: EchoRespPayload{
+			Type: "SSML",
+			Text: text,
+		},
+	}
+
+	return this
+}
+
 func (this *EchoResponse) EndSession(flag bool) *EchoResponse {
 	this.Response.ShouldEndSession = flag
 
