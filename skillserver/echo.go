@@ -166,10 +166,8 @@ type EchoSession struct {
 	Application struct {
 		ApplicationID string `json:"applicationId"`
 	} `json:"application"`
-	Attributes struct {
-		String map[string]interface{} `json:"string"`
-	} `json:"attributes"`
-	User struct {
+	Attributes map[string]interface{} `json:"attributes"`
+	User       struct {
 		UserID      string `json:"userId"`
 		AccessToken string `json:"accessToken,omitempty"`
 	} `json:"user"`
