@@ -63,6 +63,7 @@ func NewEchoResponse() *EchoResponse {
 		Response: EchoRespBody{
 			ShouldEndSession: true,
 		},
+		SessionAttributes: make(map[string]interface{}),
 	}
 
 	return er
