@@ -158,76 +158,89 @@ func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 	isDev := devFlag != ""
 
 	if !isDev {
-		certURL := r.Header.Get("SignatureCertChainUrl")
-
-		// Verify certificate URL
-		if !verifyCertURL(certURL) && devFlag == "" {
-			HTTPError(w, "Invalid cert URL: "+certURL, "Not Authorized", 401)
-			return
-		}
-
-		// Fetch certificate data
-		certContents, err := readCert(certURL)
-		if err != nil {
-			HTTPError(w, err.Error(), "Not Authorized", 401)
-			return
-		}
-
-		// Decode certificate data
-		block, _ := pem.Decode(certContents)
-		if block == nil {
-			HTTPError(w, "Failed to parse certificate PEM.", "Not Authorized", 401)
-			return
-		}
-
-		cert, err := x509.ParseCertificate(block.Bytes)
-		if err != nil {
-			HTTPError(w, err.Error(), "Not Authorized", 401)
-			return
-		}
-
-		// Check the certificate date
-		if time.Now().Unix() < cert.NotBefore.Unix() || time.Now().Unix() > cert.NotAfter.Unix() {
-			HTTPError(w, "Amazon certificate expired.", "Not Authorized", 401)
-			return
-		}
-
-		// Check the certificate alternate names
-		foundName := false
-		for _, altName := range cert.Subject.Names {
-			if altName.Value == "echo-api.amazon.com" {
-				foundName = true
-			}
-		}
-
-		if !foundName && devFlag == "" {
-			HTTPError(w, "Amazon certificate invalid.", "Not Authorized", 401)
-			return
-		}
-
-		// Verify the key
-		publicKey := cert.PublicKey
-		encryptedSig, _ := base64.StdEncoding.DecodeString(r.Header.Get("Signature"))
-
-		// Make the request body SHA1 and verify the request with the public key
-		var bodyBuf bytes.Buffer
-		hash := sha1.New()
-		_, err = io.Copy(hash, io.TeeReader(r.Body, &bodyBuf))
-		if err != nil {
-			HTTPError(w, err.Error(), "Internal Error", 500)
-			return
-		}
-		//log.Println(bodyBuf.String())
-		r.Body = ioutil.NopCloser(&bodyBuf)
-
-		err = rsa.VerifyPKCS1v15(publicKey.(*rsa.PublicKey), crypto.SHA1, hash.Sum(nil), encryptedSig)
-		if err != nil {
-			HTTPError(w, "Signature match failed.", "Not Authorized", 401)
+		isRequestValid := IsValidAlexaRequest(w, r)
+		if !isRequestValid {
 			return
 		}
 	}
 
 	next(w, r)
+}
+
+// IsValidAlexaRequest handles all the necessary steps to validate that an incoming http.Request has actually come from
+// the Alexa service. If an error occurs during the validation process, an http.Error will be written to the provided http.ResponseWriter.
+// The required steps for request validation can be found on this page:
+// https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/developing-an-alexa-skill-as-a-web-service#hosting-a-custom-skill-as-a-web-service
+func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
+	certURL := r.Header.Get("SignatureCertChainUrl")
+
+	// Verify certificate URL
+	if !verifyCertURL(certURL) {
+		HTTPError(w, "Invalid cert URL: "+certURL, "Not Authorized", 401)
+		return false
+	}
+
+	// Fetch certificate data
+	certContents, err := readCert(certURL)
+	if err != nil {
+		HTTPError(w, err.Error(), "Not Authorized", 401)
+		return false
+	}
+
+	// Decode certificate data
+	block, _ := pem.Decode(certContents)
+	if block == nil {
+		HTTPError(w, "Failed to parse certificate PEM.", "Not Authorized", 401)
+		return false
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		HTTPError(w, err.Error(), "Not Authorized", 401)
+		return false
+	}
+
+	// Check the certificate date
+	if time.Now().Unix() < cert.NotBefore.Unix() || time.Now().Unix() > cert.NotAfter.Unix() {
+		HTTPError(w, "Amazon certificate expired.", "Not Authorized", 401)
+		return false
+	}
+
+	// Check the certificate alternate names
+	foundName := false
+	for _, altName := range cert.Subject.Names {
+		if altName.Value == "echo-api.amazon.com" {
+			foundName = true
+		}
+	}
+
+	if !foundName {
+		HTTPError(w, "Amazon certificate invalid.", "Not Authorized", 401)
+		return false
+	}
+
+	// Verify the key
+	publicKey := cert.PublicKey
+	encryptedSig, _ := base64.StdEncoding.DecodeString(r.Header.Get("Signature"))
+
+	// Make the request body SHA1 and verify the request with the public key
+	var bodyBuf bytes.Buffer
+	hash := sha1.New()
+	_, err = io.Copy(hash, io.TeeReader(r.Body, &bodyBuf))
+	if err != nil {
+		HTTPError(w, err.Error(), "Internal Error", 500)
+		return false
+	}
+	//log.Println(bodyBuf.String())
+	r.Body = ioutil.NopCloser(&bodyBuf)
+
+	err = rsa.VerifyPKCS1v15(publicKey.(*rsa.PublicKey), crypto.SHA1, hash.Sum(nil), encryptedSig)
+	if err != nil {
+		HTTPError(w, "Signature match failed.", "Not Authorized", 401)
+		return false
+	}
+
+	return true
 }
 
 func readCert(certURL string) ([]byte, error) {
