@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/context"
 	"github.com/kennygrant/sanitize"
 	alexa "github.com/mikeflynn/go-alexa/skillserver"
 	"gopkg.in/mgo.v2"
@@ -99,7 +98,7 @@ var JeopardyWrongAnswer = []string{
 // #4: Give current score and list categories.
 
 func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
-	echoReq := context.Get(r, "echoRequest").(*alexa.EchoRequest)
+	echoReq := alexa.GetEchoRequest(r)
 
 	// Start up Mongo!
 	mongodb, err := mgo.Dial("localhost")
