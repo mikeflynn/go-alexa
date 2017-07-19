@@ -82,6 +82,15 @@ func (this *EchoResponse) Card(title string, content string) *EchoResponse {
 	return this.SimpleCard(title, content)
 }
 
+func (this *EchoResponse) OutputSpeechSSML(text string) *EchoResponse {
+	this.Response.OutputSpeech = &EchoRespPayload{
+		Type: "SSML",
+		SSML: text,
+	}
+
+	return this
+}
+
 func (this *EchoResponse) SimpleCard(title string, content string) *EchoResponse {
 	this.Response.Card = &EchoRespPayload{
 		Type:    "Simple",
@@ -122,6 +131,17 @@ func (this *EchoResponse) Reprompt(text string) *EchoResponse {
 	this.Response.Reprompt = &EchoReprompt{
 		OutputSpeech: EchoRespPayload{
 			Type: "PlainText",
+			Text: text,
+		},
+	}
+
+	return this
+}
+
+func (this *EchoResponse) RepromptSSML(text string) *EchoResponse {
+	this.Response.Reprompt = &EchoReprompt{
+		OutputSpeech: EchoRespPayload{
+			Type: "SSML",
 			Text: text,
 		},
 	}

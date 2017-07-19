@@ -10,26 +10,6 @@ import (
  * https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/speech-synthesis-markup-language-ssml-reference
  */
 
-func (this *EchoResponse) OutputSpeechSSML(text string) *EchoResponse {
-	this.Response.OutputSpeech = &EchoRespPayload{
-		Type: "SSML",
-		SSML: text,
-	}
-
-	return this
-}
-
-func (this *EchoResponse) RepromptSSML(text string) *EchoResponse {
-	this.Response.Reprompt = &EchoReprompt{
-		OutputSpeech: EchoRespPayload{
-			Type: "SSML",
-			Text: text,
-		},
-	}
-
-	return this
-}
-
 // Helper Types
 
 type SSMLTextBuilder struct {
