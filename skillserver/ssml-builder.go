@@ -41,14 +41,14 @@ func (builder *SSMLTextBuilder) AppendAudio(src string) *SSMLTextBuilder {
 	return builder
 }
 
-func (builder *SSMLTextBuilder) AppendBreak(text, strength, time string) *SSMLTextBuilder {
+func (builder *SSMLTextBuilder) AppendBreak(strength, time string) *SSMLTextBuilder {
 
 	if strength == "" {
 		// The default strength is medium
 		strength = "medium"
 	}
 
-	builder.buffer.WriteString(fmt.Sprintf("<break strength=\"%s\" time=\"%s\"/>", strength, text))
+	builder.buffer.WriteString(fmt.Sprintf("<break strength=\"%s\" time=\"%s\"/>", strength, time))
 
 	return builder
 }
