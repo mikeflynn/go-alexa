@@ -167,39 +167,47 @@ func (this *EchoResponse) EndSession(flag bool) *EchoResponse {
 	return this
 }
 
-func (this *EchoResponse) DialogDelegate(updatedIntent *EchoIntent) {
+func (this *EchoResponse) DialogDelegate(updatedIntent *EchoIntent) *EchoResponse {
 	this.appendDirective(&EchoRespPayload{
 		Type:          "Dialog.Delegate",
 		UpdatedIntent: updatedIntent,
 	})
 	this.EndSession(false)
+
+	return this
 }
 
-func (this *EchoResponse) ElicitSlot(slotToElicit string, updatedIntent *EchoIntent) {
+func (this *EchoResponse) ElicitSlot(slotToElicit string, updatedIntent *EchoIntent) *EchoResponse {
 	this.appendDirective(&EchoRespPayload{
 		Type:          "Dialog.ElicitSlot",
 		SlotToElicit:  slotToElicit,
 		UpdatedIntent: updatedIntent,
 	})
 	this.EndSession(false)
+
+	return this
 }
 
-func (this *EchoResponse) ConfirmSlot(slotToConfirm string, updatedIntent *EchoIntent) {
+func (this *EchoResponse) ConfirmSlot(slotToConfirm string, updatedIntent *EchoIntent) *EchoResponse {
 	this.appendDirective(&EchoRespPayload{
 		Type:          "Dialog.ConfirmSlot",
 		SlotToConfirm: slotToConfirm,
 		UpdatedIntent: updatedIntent,
 	})
 	this.EndSession(false)
+
+	return this
 }
 
-func (this *EchoResponse) ConfirmIntent(intentToConfirm string, updatedIntent *EchoIntent) {
+func (this *EchoResponse) ConfirmIntent(intentToConfirm string, updatedIntent *EchoIntent) *EchoResponse {
 	this.appendDirective(&EchoRespPayload{
 		Type:            "Dialog.ConfirmIntent",
 		IntentToConfirm: intentToConfirm,
 		UpdatedIntent:   updatedIntent,
 	})
 	this.EndSession(false)
+
+	return this
 }
 
 func (this *EchoResponse) appendDirective(directive *EchoRespPayload) {
