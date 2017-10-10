@@ -3,6 +3,8 @@ package ssml
 import (
 	"testing"
 	"time"
+
+	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
 )
 
 func TestNewBuilder_ReturnsEmptySSML(t *testing.T) {
@@ -35,19 +37,19 @@ func TestBuilder_AppendPlainSpeech(t *testing.T) {
 func TestBuilder_AppendAmazonEffect(t *testing.T) {
 	tests := []struct {
 		name     string
-		effect   AmazonEffect
+		effect   amazoneffect.Effect
 		text     string
 		expected string
 	}{
 		{
 			name:     "whispered",
-			effect:   EffectWhispered,
+			effect:   amazoneffect.Whispered,
 			text:     "test1",
 			expected: `<speak><amazon:effect name="whispered">test1</amazon:effect><amazon:effect name="whispered">test1</amazon:effect></speak>`,
 		},
 		{
 			name:     "custom",
-			effect:   AmazonEffect("custom"),
+			effect:   amazoneffect.Effect("custom"),
 			text:     "test2",
 			expected: `<speak><amazon:effect name="custom">test2</amazon:effect><amazon:effect name="custom">test2</amazon:effect></speak>`,
 		},

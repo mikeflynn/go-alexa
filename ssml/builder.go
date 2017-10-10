@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"time"
+
+	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
 )
 
 /**
@@ -20,7 +22,7 @@ func (builder *builder) AppendPlainSpeech(text string) (*builder, error) {
 	return builder, nil
 }
 
-func (builder *builder) AppendAmazonEffect(effect AmazonEffect, text string) (*builder, error) {
+func (builder *builder) AppendAmazonEffect(effect amazoneffect.Effect, text string) (*builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<amazon:effect name=\"%s\">%s</amazon:effect>", effect, text))
 	return builder, nil
 }
