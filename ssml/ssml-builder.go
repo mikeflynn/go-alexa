@@ -10,26 +10,26 @@ import (
  * https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/speech-synthesis-markup-language-ssml-reference
  */
 
-func NewSSMLTextBuilder() *SSMLTextBuilder {
-	return &SSMLTextBuilder{bytes.NewBufferString("")}
+func NewBuilder() *builder {
+	return &builder{bytes.NewBufferString("")}
 }
 
-func (builder *SSMLTextBuilder) AppendPlainSpeech(text string) *SSMLTextBuilder {
+func (builder *builder) AppendPlainSpeech(text string) *builder {
 	builder.buffer.WriteString(text)
 	return builder
 }
 
-func (builder *SSMLTextBuilder) AppendAmazonEffect(text, name string) *SSMLTextBuilder {
+func (builder *builder) AppendAmazonEffect(text, name string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<amazon:effect name=\"%s\">%s</amazon:effect>", name, text))
 	return builder
 }
 
-func (builder *SSMLTextBuilder) AppendAudio(src string) *SSMLTextBuilder {
+func (builder *builder) AppendAudio(src string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<audio src=\"%s\"/>", src))
 	return builder
 }
 
-func (builder *SSMLTextBuilder) AppendBreak(strength, time string) *SSMLTextBuilder {
+func (builder *builder) AppendBreak(strength, time string) *builder {
 	if strength == "" {
 		// The default strength is medium
 		strength = "medium"
@@ -38,31 +38,31 @@ func (builder *SSMLTextBuilder) AppendBreak(strength, time string) *SSMLTextBuil
 	return builder
 }
 
-func (builder *SSMLTextBuilder) AppendEmphasis(text, level string) *SSMLTextBuilder {
+func (builder *builder) AppendEmphasis(text, level string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<emphasis level=\"%s\">%s</emphasis>", level, text))
 	return builder
 }
 
-func (builder *SSMLTextBuilder) AppendParagraph(text string) *SSMLTextBuilder {
+func (builder *builder) AppendParagraph(text string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<p>%s</p>", text))
 	return builder
 }
 
-func (builder *SSMLTextBuilder) AppendProsody(text, rate, pitch, volume string) *SSMLTextBuilder {
+func (builder *builder) AppendProsody(text, rate, pitch, volume string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<prosody rate=\"%s\" pitch=\"%s\" volume=\"%s\">%s</prosody>", rate, pitch, volume, text))
 	return builder
 }
 
-func (builder *SSMLTextBuilder) AppendSentence(text string) *SSMLTextBuilder {
+func (builder *builder) AppendSentence(text string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<s>%s</s>", text))
 	return builder
 }
 
-func (builder *SSMLTextBuilder) AppendSubstitution(text, alias string) *SSMLTextBuilder {
+func (builder *builder) AppendSubstitution(text, alias string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<sub alias=\"%s\">%s</sub>", alias, text))
 	return builder
 }
 
-func (builder *SSMLTextBuilder) Build() string {
+func (builder *builder) Build() string {
 	return fmt.Sprintf("<speak>%s</speak>", builder.buffer.String())
 }

@@ -2,6 +2,6 @@ package skillserver
 
 import "bytes"
 
-type SSMLTextBuilder struct {
+type builder struct {
 	buffer *bytes.Buffer
 }
