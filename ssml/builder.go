@@ -3,6 +3,7 @@ package ssml
 import (
 	"bytes"
 	"fmt"
+	"time"
 )
 
 /**
@@ -29,12 +30,9 @@ func (builder *builder) AppendAudio(src string) (*builder, error) {
 	return builder, nil
 }
 
-func (builder *builder) AppendBreak(strength, time string) (*builder, error) {
-	if strength == "" {
-		// The default strength is medium
-		strength = "medium"
-	}
-	builder.buffer.WriteString(fmt.Sprintf("<break strength=\"%s\" time=\"%s\"/>", strength, time))
+func (builder *builder) AppendBreak(strength BreakStrength, duration time.Duration) (*builder, error) {
+	durationMs := duration.Nanoseconds() / 1e6
+	builder.buffer.WriteString(fmt.Sprintf("<break strength=\"%s\" time=\"%dms\"/>", strength, durationMs))
 	return builder, nil
 }
 

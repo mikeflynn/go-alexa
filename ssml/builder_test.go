@@ -2,6 +2,7 @@ package ssml
 
 import (
 	"testing"
+	"time"
 )
 
 func TestNewBuilder_ReturnsEmptySSML(t *testing.T) {
@@ -60,23 +61,59 @@ func TestBuilder_AppendAudio(t *testing.T) {
 func TestBuilder_AppendBreak(t *testing.T) {
 	tests := []struct {
 		name     string
-		strength string
-		time     string
+		strength BreakStrength
+		duration time.Duration
 		expected string
 	}{
 		{
-			name:     "blank_input",
-			strength: "",
-			time:     "",
-			expected: `<speak><break strength="medium" time=""/><break strength="medium" time=""/></speak>`,
+			name:     "default",
+			strength: StrengthDefault,
+			duration: time.Second,
+			expected: `<speak><break strength="medium" time="1000ms"/><break strength="medium" time="1000ms"/></speak>`,
+		},
+		{
+			name:     "none",
+			strength: StrengthNone,
+			duration: time.Second / 2,
+			expected: `<speak><break strength="none" time="500ms"/><break strength="none" time="500ms"/></speak>`,
+		},
+		{
+			name:     "x-weak",
+			strength: StrengthXWeak,
+			duration: time.Second * 2,
+			expected: `<speak><break strength="x-weak" time="2000ms"/><break strength="x-weak" time="2000ms"/></speak>`,
+		},
+		{
+			name:     "weak",
+			strength: StrengthWeak,
+			duration: time.Second * 3,
+			expected: `<speak><break strength="weak" time="3000ms"/><break strength="weak" time="3000ms"/></speak>`,
+		},
+		{
+			name:     "medium",
+			strength: StrengthMedium,
+			duration: time.Second * 4,
+			expected: `<speak><break strength="medium" time="4000ms"/><break strength="medium" time="4000ms"/></speak>`,
+		},
+		{
+			name:     "strong",
+			strength: StrengthStrong,
+			duration: time.Second * 5,
+			expected: `<speak><break strength="strong" time="5000ms"/><break strength="strong" time="5000ms"/></speak>`,
+		},
+		{
+			name:     "x-strong",
+			strength: StrengthXStrong,
+			duration: time.Second * 6,
+			expected: `<speak><break strength="x-strong" time="6000ms"/><break strength="x-strong" time="6000ms"/></speak>`,
 		},
 	}
 
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		b.AppendBreak(test.strength, test.time)
-		b.AppendBreak(test.strength, test.time)
+		b.AppendBreak(test.strength, test.duration)
+		b.AppendBreak(test.strength, test.duration)
 
 		actual := b.Build()
 		if actual != test.expected {
