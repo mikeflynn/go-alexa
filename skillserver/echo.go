@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+type DialogType string
+
+const (
+	DialogDelegate      DialogType = "Dialog.Delegate"
+	DialogElicitSlot    DialogType = "Dialog.ElicitSlot"
+	DialogConfirmSlot   DialogType = "Dialog.ConfirmSlot"
+	DialogConfirmIntent DialogType = "Dialog.ConfirmIntent"
+)
+
 type DialogState string
 
 const (
@@ -180,7 +189,7 @@ func (this *EchoResponse) EndSession(flag bool) *EchoResponse {
 
 func (this *EchoResponse) DialogDelegate(updatedIntent *EchoIntent) *EchoResponse {
 	this.appendDirective(&DialogDirective{
-		Type:          "Dialog.Delegate",
+		Type:          DialogDelegate,
 		UpdatedIntent: updatedIntent,
 	})
 	this.EndSession(false)
@@ -190,7 +199,7 @@ func (this *EchoResponse) DialogDelegate(updatedIntent *EchoIntent) *EchoRespons
 
 func (this *EchoResponse) ElicitSlot(slotToElicit string, updatedIntent *EchoIntent) *EchoResponse {
 	this.appendDirective(&DialogDirective{
-		Type:          "Dialog.ElicitSlot",
+		Type:          DialogElicitSlot,
 		SlotToElicit:  slotToElicit,
 		UpdatedIntent: updatedIntent,
 	})
@@ -201,7 +210,7 @@ func (this *EchoResponse) ElicitSlot(slotToElicit string, updatedIntent *EchoInt
 
 func (this *EchoResponse) ConfirmSlot(slotToConfirm string, updatedIntent *EchoIntent) *EchoResponse {
 	this.appendDirective(&DialogDirective{
-		Type:          "Dialog.ConfirmSlot",
+		Type:          DialogConfirmSlot,
 		SlotToConfirm: slotToConfirm,
 		UpdatedIntent: updatedIntent,
 	})
@@ -212,7 +221,7 @@ func (this *EchoResponse) ConfirmSlot(slotToConfirm string, updatedIntent *EchoI
 
 func (this *EchoResponse) ConfirmIntent(intentToConfirm string, updatedIntent *EchoIntent) *EchoResponse {
 	this.appendDirective(&DialogDirective{
-		Type:            "Dialog.ConfirmIntent",
+		Type:            DialogConfirmIntent,
 		IntentToConfirm: intentToConfirm,
 		UpdatedIntent:   updatedIntent,
 	})
@@ -289,7 +298,7 @@ type EchoResponse struct {
 }
 
 type DialogDirective struct {
-	Type            string      `json:"type,omitempty"`
+	Type            DialogType  `json:"type,omitempty"`
 	SlotToConfirm   string      `json:"slotToConfirm,omitempty"`
 	SlotToElicit    string      `json:"slotToElicit,omitempty"`
 	IntentToConfirm string      `json:"intentToConfirm,omitempty"`
