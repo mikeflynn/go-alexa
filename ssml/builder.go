@@ -46,7 +46,7 @@ func (builder *builder) AppendParagraph(text string) (*builder, error) {
 	return builder, nil
 }
 
-func (builder *builder) AppendProsody(rate, pitch, volume, text string) (*builder, error) {
+func (builder *builder) AppendProsody(rate ProsodyRate, pitch ProsodyPitch, volume ProsodyVolume, text string) (*builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<prosody rate=\"%s\" pitch=\"%s\" volume=\"%s\">%s</prosody>", rate, pitch, volume, text))
 	return builder, nil
 }
