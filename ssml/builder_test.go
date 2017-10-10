@@ -41,28 +41,25 @@ func TestBuilder_AppendAmazonEffect(t *testing.T) {
 	tests := []struct {
 		name     string
 		effect   amazoneffect.Effect
-		text     string
 		expected string
 	}{
 		{
 			name:     "whispered",
 			effect:   amazoneffect.Whispered,
-			text:     "test1",
-			expected: `<speak><amazon:effect name="whispered">test1</amazon:effect><amazon:effect name="whispered">test1</amazon:effect></speak>`,
+			expected: `<speak><amazon:effect name="whispered">text1</amazon:effect><amazon:effect name="whispered">text2</amazon:effect></speak>`,
 		},
 		{
 			name:     "custom",
 			effect:   amazoneffect.Effect("custom"),
-			text:     "test2",
-			expected: `<speak><amazon:effect name="custom">test2</amazon:effect><amazon:effect name="custom">test2</amazon:effect></speak>`,
+			expected: `<speak><amazon:effect name="custom">text1</amazon:effect><amazon:effect name="custom">text2</amazon:effect></speak>`,
 		},
 	}
 
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		b.AppendAmazonEffect(test.effect, test.text)
-		b.AppendAmazonEffect(test.effect, test.text)
+		b.AppendAmazonEffect(test.effect, "text1")
+		b.AppendAmazonEffect(test.effect, "text2")
 
 		actual := b.Build()
 		if actual != test.expected {
@@ -164,40 +161,35 @@ func TestBuilder_AppendEmphasis(t *testing.T) {
 		{
 			name:     "default",
 			level:    emphasis.Default,
-			text:     "test1",
-			expected: `<speak><emphasis level="moderate">test1</emphasis><emphasis level="moderate">test1</emphasis></speak>`,
+			expected: `<speak><emphasis level="moderate">text1</emphasis><emphasis level="moderate">text2</emphasis></speak>`,
 		},
 		{
 			name:     "strong",
 			level:    emphasis.Strong,
-			text:     "test2",
-			expected: `<speak><emphasis level="strong">test2</emphasis><emphasis level="strong">test2</emphasis></speak>`,
+			expected: `<speak><emphasis level="strong">text1</emphasis><emphasis level="strong">text2</emphasis></speak>`,
 		},
 		{
 			name:     "moderate",
 			level:    emphasis.Moderate,
-			text:     "test3",
-			expected: `<speak><emphasis level="moderate">test3</emphasis><emphasis level="moderate">test3</emphasis></speak>`,
+			expected: `<speak><emphasis level="moderate">text1</emphasis><emphasis level="moderate">text2</emphasis></speak>`,
 		},
 		{
 			name:     "reduced",
 			level:    emphasis.Reduced,
-			text:     "test4",
-			expected: `<speak><emphasis level="reduced">test4</emphasis><emphasis level="reduced">test4</emphasis></speak>`,
+			expected: `<speak><emphasis level="reduced">text1</emphasis><emphasis level="reduced">text2</emphasis></speak>`,
 		},
 		{
 			name:     "reduced",
 			level:    emphasis.Level("custom"),
-			text:     "test5",
-			expected: `<speak><emphasis level="custom">test5</emphasis><emphasis level="custom">test5</emphasis></speak>`,
+			expected: `<speak><emphasis level="custom">text1</emphasis><emphasis level="custom">text2</emphasis></speak>`,
 		},
 	}
 
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		b.AppendEmphasis(test.level, test.text)
-		b.AppendEmphasis(test.level, test.text)
+		b.AppendEmphasis(test.level, "text1")
+		b.AppendEmphasis(test.level, "text2")
 
 		actual := b.Build()
 		if actual != test.expected {
