@@ -20,8 +20,8 @@ func (builder *builder) AppendPlainSpeech(text string) (*builder, error) {
 	return builder, nil
 }
 
-func (builder *builder) AppendAmazonEffect(name, text string) (*builder, error) {
-	builder.buffer.WriteString(fmt.Sprintf("<amazon:effect name=\"%s\">%s</amazon:effect>", name, text))
+func (builder *builder) AppendAmazonEffect(effect AmazonEffect, text string) (*builder, error) {
+	builder.buffer.WriteString(fmt.Sprintf("<amazon:effect name=\"%s\">%s</amazon:effect>", effect, text))
 	return builder, nil
 }
 

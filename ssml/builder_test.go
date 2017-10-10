@@ -33,15 +33,36 @@ func TestBuilder_AppendPlainSpeech(t *testing.T) {
 }
 
 func TestBuilder_AppendAmazonEffect(t *testing.T) {
-	b, _ := NewBuilder()
+	tests := []struct {
+		name     string
+		effect   AmazonEffect
+		text     string
+		expected string
+	}{
+		{
+			name:     "whispered",
+			effect:   EffectWhispered,
+			text:     "test1",
+			expected: `<speak><amazon:effect name="whispered">test1</amazon:effect><amazon:effect name="whispered">test1</amazon:effect></speak>`,
+		},
+		{
+			name:     "custom",
+			effect:   AmazonEffect("custom"),
+			text:     "test2",
+			expected: `<speak><amazon:effect name="custom">test2</amazon:effect><amazon:effect name="custom">test2</amazon:effect></speak>`,
+		},
+	}
 
-	b.AppendAmazonEffect("effect1", "effect1text")
-	b.AppendAmazonEffect("effect2", "effect2text")
+	for _, test := range tests {
+		b, _ := NewBuilder()
 
-	actual := b.Build()
-	expected := `<speak><amazon:effect name="effect1">effect1text</amazon:effect><amazon:effect name="effect2">effect2text</amazon:effect></speak>`
-	if actual != expected {
-		t.Errorf("output mismatch: expected %s, got %s", expected, actual)
+		b.AppendAmazonEffect(test.effect, test.text)
+		b.AppendAmazonEffect(test.effect, test.text)
+
+		actual := b.Build()
+		if actual != test.expected {
+			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
+		}
 	}
 }
 

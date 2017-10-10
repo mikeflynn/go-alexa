@@ -6,6 +6,12 @@ type builder struct {
 	buffer *bytes.Buffer
 }
 
+type AmazonEffect string
+
+const (
+	EffectWhispered AmazonEffect = "whispered"
+)
+
 type BreakStrength string
 
 const (
