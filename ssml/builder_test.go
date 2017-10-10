@@ -107,6 +107,12 @@ func TestBuilder_AppendBreak(t *testing.T) {
 			duration: time.Second * 6,
 			expected: `<speak><break strength="x-strong" time="6000ms"/><break strength="x-strong" time="6000ms"/></speak>`,
 		},
+		{
+			name:     "custom",
+			strength: BreakStrength("custom"),
+			duration: time.Second * 7,
+			expected: `<speak><break strength="custom" time="7000ms"/><break strength="custom" time="7000ms"/></speak>`,
+		},
 	}
 
 	for _, test := range tests {
@@ -123,15 +129,54 @@ func TestBuilder_AppendBreak(t *testing.T) {
 }
 
 func TestBuilder_AppendEmphasis(t *testing.T) {
-	b, _ := NewBuilder()
+	tests := []struct {
+		name     string
+		level    EmphasisLevel
+		text     string
+		expected string
+	}{
+		{
+			name:     "default",
+			level:    EmphasisDefault,
+			text:     "test1",
+			expected: `<speak><emphasis level="moderate">test1</emphasis><emphasis level="moderate">test1</emphasis></speak>`,
+		},
+		{
+			name:     "strong",
+			level:    EmphasisStrong,
+			text:     "test2",
+			expected: `<speak><emphasis level="strong">test2</emphasis><emphasis level="strong">test2</emphasis></speak>`,
+		},
+		{
+			name:     "moderate",
+			level:    EmphasisModerate,
+			text:     "test3",
+			expected: `<speak><emphasis level="moderate">test3</emphasis><emphasis level="moderate">test3</emphasis></speak>`,
+		},
+		{
+			name:     "reduced",
+			level:    EmphasisReduced,
+			text:     "test4",
+			expected: `<speak><emphasis level="reduced">test4</emphasis><emphasis level="reduced">test4</emphasis></speak>`,
+		},
+		{
+			name:     "reduced",
+			level:    EmphasisLevel("custom"),
+			text:     "test5",
+			expected: `<speak><emphasis level="custom">test5</emphasis><emphasis level="custom">test5</emphasis></speak>`,
+		},
+	}
 
-	b.AppendEmphasis("level1", "text1")
-	b.AppendEmphasis("level2", "text2")
+	for _, test := range tests {
+		b, _ := NewBuilder()
 
-	actual := b.Build()
-	expected := `<speak><emphasis level="level1">text1</emphasis><emphasis level="level2">text2</emphasis></speak>`
-	if actual != expected {
-		t.Errorf("output mismatch: expected %s, got %s", expected, actual)
+		b.AppendEmphasis(test.level, test.text)
+		b.AppendEmphasis(test.level, test.text)
+
+		actual := b.Build()
+		if actual != test.expected {
+			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
+		}
 	}
 }
 

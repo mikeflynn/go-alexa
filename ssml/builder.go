@@ -36,7 +36,7 @@ func (builder *builder) AppendBreak(strength BreakStrength, duration time.Durati
 	return builder, nil
 }
 
-func (builder *builder) AppendEmphasis(level, text string) (*builder, error) {
+func (builder *builder) AppendEmphasis(level EmphasisLevel, text string) (*builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<emphasis level=\"%s\">%s</emphasis>", level, text))
 	return builder, nil
 }

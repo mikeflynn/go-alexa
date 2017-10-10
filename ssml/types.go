@@ -17,3 +17,12 @@ const (
 	StrengthStrong  BreakStrength = "strong"
 	StrengthXStrong BreakStrength = "x-strong"
 )
+
+type EmphasisLevel string
+
+const (
+	EmphasisDefault  EmphasisLevel = "moderate"
+	EmphasisStrong   EmphasisLevel = "strong"
+	EmphasisModerate EmphasisLevel = "moderate"
+	EmphasisReduced  EmphasisLevel = "reduced"
+)
