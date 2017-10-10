@@ -19,7 +19,7 @@ func (builder *builder) AppendPlainSpeech(text string) *builder {
 	return builder
 }
 
-func (builder *builder) AppendAmazonEffect(text, name string) *builder {
+func (builder *builder) AppendAmazonEffect(name, text string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<amazon:effect name=\"%s\">%s</amazon:effect>", name, text))
 	return builder
 }
@@ -38,7 +38,7 @@ func (builder *builder) AppendBreak(strength, time string) *builder {
 	return builder
 }
 
-func (builder *builder) AppendEmphasis(text, level string) *builder {
+func (builder *builder) AppendEmphasis(level, text string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<emphasis level=\"%s\">%s</emphasis>", level, text))
 	return builder
 }
@@ -48,7 +48,7 @@ func (builder *builder) AppendParagraph(text string) *builder {
 	return builder
 }
 
-func (builder *builder) AppendProsody(text, rate, pitch, volume string) *builder {
+func (builder *builder) AppendProsody(rate, pitch, volume, text string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<prosody rate=\"%s\" pitch=\"%s\" volume=\"%s\">%s</prosody>", rate, pitch, volume, text))
 	return builder
 }
@@ -58,7 +58,7 @@ func (builder *builder) AppendSentence(text string) *builder {
 	return builder
 }
 
-func (builder *builder) AppendSubstitution(text, alias string) *builder {
+func (builder *builder) AppendSubstitution(alias, text string) *builder {
 	builder.buffer.WriteString(fmt.Sprintf("<sub alias=\"%s\">%s</sub>", alias, text))
 	return builder
 }
