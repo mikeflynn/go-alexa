@@ -7,6 +7,7 @@ import (
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
 	"github.com/mikeflynn/go-alexa/ssml/emphasis"
 	"github.com/mikeflynn/go-alexa/ssml/pause"
+	"github.com/mikeflynn/go-alexa/ssml/prosody"
 )
 
 func TestNewBuilder_ReturnsEmptySSML(t *testing.T) {
@@ -221,58 +222,58 @@ func TestBuilder_AppendParagraph(t *testing.T) {
 func TestBuilder_AppendProsody(t *testing.T) {
 	tests := []struct {
 		name     string
-		rate     ProsodyRate
-		pitch    ProsodyPitch
-		volume   ProsodyVolume
+		rate     prosody.Rate
+		pitch    prosody.Pitch
+		volume   prosody.Volume
 		expected string
 	}{
 		{
-			name:     "x-slow, s-low, & silent",
-			rate:     RateXSlow,
-			pitch:    PitchXLow,
-			volume:   VolumeSilent,
+			name:     "x-slow, x-low, & silent",
+			rate:     prosody.RateXSlow,
+			pitch:    prosody.PitchXLow,
+			volume:   prosody.VolumeSilent,
 			expected: `<speak><prosody rate="x-slow" pitch="x-low" volume="silent">text1</prosody><prosody rate="x-slow" pitch="x-low" volume="silent">text2</prosody></speak>`,
 		},
 		{
 			name:     "slow, low, & x-soft",
-			rate:     RateSlow,
-			pitch:    PitchLow,
-			volume:   VolumeXSoft,
+			rate:     prosody.RateSlow,
+			pitch:    prosody.PitchLow,
+			volume:   prosody.VolumeXSoft,
 			expected: `<speak><prosody rate="slow" pitch="low" volume="x-soft">text1</prosody><prosody rate="slow" pitch="low" volume="x-soft">text2</prosody></speak>`,
 		},
 		{
 			name:     "medium, medium, & soft",
-			rate:     RateMedium,
-			pitch:    PitchMedium,
-			volume:   VolumeSoft,
+			rate:     prosody.RateMedium,
+			pitch:    prosody.PitchMedium,
+			volume:   prosody.VolumeSoft,
 			expected: `<speak><prosody rate="medium" pitch="medium" volume="soft">text1</prosody><prosody rate="medium" pitch="medium" volume="soft">text2</prosody></speak>`,
 		},
 		{
 			name:     "fast, high, & medium",
-			rate:     RateFast,
-			pitch:    PitchHigh,
-			volume:   VolumeMedium,
+			rate:     prosody.RateFast,
+			pitch:    prosody.PitchHigh,
+			volume:   prosody.VolumeMedium,
 			expected: `<speak><prosody rate="fast" pitch="high" volume="medium">text1</prosody><prosody rate="fast" pitch="high" volume="medium">text2</prosody></speak>`,
 		},
 		{
 			name:     "x-fast, x-high, & loud",
-			rate:     RateXFast,
-			pitch:    PitchXHigh,
-			volume:   VolumeLoud,
+			rate:     prosody.RateXFast,
+			pitch:    prosody.PitchXHigh,
+			volume:   prosody.VolumeLoud,
 			expected: `<speak><prosody rate="x-fast" pitch="x-high" volume="loud">text1</prosody><prosody rate="x-fast" pitch="x-high" volume="loud">text2</prosody></speak>`,
 		},
 		{
 			name:     "x-fast, x-high, & x-loud",
-			rate:     RateXFast,
-			pitch:    PitchXHigh,
-			volume:   VolumeXLoud,
+			rate:     prosody.RateXFast,
+			pitch:    prosody.PitchXHigh,
+			volume:   prosody.VolumeXLoud,
 			expected: `<speak><prosody rate="x-fast" pitch="x-high" volume="x-loud">text1</prosody><prosody rate="x-fast" pitch="x-high" volume="x-loud">text2</prosody></speak>`,
 		},
 		{
 			name:     "custom",
-			rate:     ProsodyRate("custom rate"),
-			pitch:    ProsodyPitch("custom pitch"),
-			volume:   ProsodyVolume("custom volume"),
+			rate:     prosody.Rate("custom rate"),
+			pitch:    prosody.Pitch("custom pitch"),
+			volume:   prosody.Volume("custom volume"),
 			expected: `<speak><prosody rate="custom rate" pitch="custom pitch" volume="custom volume">text1</prosody><prosody rate="custom rate" pitch="custom pitch" volume="custom volume">text2</prosody></speak>`,
 		},
 	}
