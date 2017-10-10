@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
+	"github.com/mikeflynn/go-alexa/ssml/pause"
 )
 
 func TestNewBuilder_ReturnsEmptySSML(t *testing.T) {
@@ -84,55 +85,55 @@ func TestBuilder_AppendAudio(t *testing.T) {
 func TestBuilder_AppendBreak(t *testing.T) {
 	tests := []struct {
 		name     string
-		strength BreakStrength
+		strength pause.Strength
 		duration time.Duration
 		expected string
 	}{
 		{
 			name:     "default",
-			strength: StrengthDefault,
+			strength: pause.Default,
 			duration: time.Second,
 			expected: `<speak><break strength="medium" time="1000ms"/><break strength="medium" time="1000ms"/></speak>`,
 		},
 		{
 			name:     "none",
-			strength: StrengthNone,
+			strength: pause.None,
 			duration: time.Second / 2,
 			expected: `<speak><break strength="none" time="500ms"/><break strength="none" time="500ms"/></speak>`,
 		},
 		{
 			name:     "x-weak",
-			strength: StrengthXWeak,
+			strength: pause.XWeak,
 			duration: time.Second * 2,
 			expected: `<speak><break strength="x-weak" time="2000ms"/><break strength="x-weak" time="2000ms"/></speak>`,
 		},
 		{
 			name:     "weak",
-			strength: StrengthWeak,
+			strength: pause.Weak,
 			duration: time.Second * 3,
 			expected: `<speak><break strength="weak" time="3000ms"/><break strength="weak" time="3000ms"/></speak>`,
 		},
 		{
 			name:     "medium",
-			strength: StrengthMedium,
+			strength: pause.Medium,
 			duration: time.Second * 4,
 			expected: `<speak><break strength="medium" time="4000ms"/><break strength="medium" time="4000ms"/></speak>`,
 		},
 		{
 			name:     "strong",
-			strength: StrengthStrong,
+			strength: pause.Strong,
 			duration: time.Second * 5,
 			expected: `<speak><break strength="strong" time="5000ms"/><break strength="strong" time="5000ms"/></speak>`,
 		},
 		{
 			name:     "x-strong",
-			strength: StrengthXStrong,
+			strength: pause.XStrong,
 			duration: time.Second * 6,
 			expected: `<speak><break strength="x-strong" time="6000ms"/><break strength="x-strong" time="6000ms"/></speak>`,
 		},
 		{
 			name:     "custom",
-			strength: BreakStrength("custom"),
+			strength: pause.Strength("custom"),
 			duration: time.Second * 7,
 			expected: `<speak><break strength="custom" time="7000ms"/><break strength="custom" time="7000ms"/></speak>`,
 		},

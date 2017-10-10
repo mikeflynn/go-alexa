@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
+	"github.com/mikeflynn/go-alexa/ssml/pause"
 )
 
 /**
@@ -32,7 +33,7 @@ func (builder *builder) AppendAudio(src string) (*builder, error) {
 	return builder, nil
 }
 
-func (builder *builder) AppendBreak(strength BreakStrength, duration time.Duration) (*builder, error) {
+func (builder *builder) AppendBreak(strength pause.Strength, duration time.Duration) (*builder, error) {
 	durationMs := duration.Nanoseconds() / 1e6
 	builder.buffer.WriteString(fmt.Sprintf("<break strength=\"%s\" time=\"%dms\"/>", strength, durationMs))
 	return builder, nil
