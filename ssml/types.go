@@ -6,15 +6,6 @@ type builder struct {
 	buffer *bytes.Buffer
 }
 
-type EmphasisLevel string
-
-const (
-	EmphasisDefault  EmphasisLevel = "moderate"
-	EmphasisStrong   EmphasisLevel = "strong"
-	EmphasisModerate EmphasisLevel = "moderate"
-	EmphasisReduced  EmphasisLevel = "reduced"
-)
-
 type ProsodyRate string
 
 const (

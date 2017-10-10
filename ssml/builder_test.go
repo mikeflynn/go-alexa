@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
+	"github.com/mikeflynn/go-alexa/ssml/emphasis"
 	"github.com/mikeflynn/go-alexa/ssml/pause"
 )
 
@@ -155,37 +156,37 @@ func TestBuilder_AppendBreak(t *testing.T) {
 func TestBuilder_AppendEmphasis(t *testing.T) {
 	tests := []struct {
 		name     string
-		level    EmphasisLevel
+		level    emphasis.Level
 		text     string
 		expected string
 	}{
 		{
 			name:     "default",
-			level:    EmphasisDefault,
+			level:    emphasis.Default,
 			text:     "test1",
 			expected: `<speak><emphasis level="moderate">test1</emphasis><emphasis level="moderate">test1</emphasis></speak>`,
 		},
 		{
 			name:     "strong",
-			level:    EmphasisStrong,
+			level:    emphasis.Strong,
 			text:     "test2",
 			expected: `<speak><emphasis level="strong">test2</emphasis><emphasis level="strong">test2</emphasis></speak>`,
 		},
 		{
 			name:     "moderate",
-			level:    EmphasisModerate,
+			level:    emphasis.Moderate,
 			text:     "test3",
 			expected: `<speak><emphasis level="moderate">test3</emphasis><emphasis level="moderate">test3</emphasis></speak>`,
 		},
 		{
 			name:     "reduced",
-			level:    EmphasisReduced,
+			level:    emphasis.Reduced,
 			text:     "test4",
 			expected: `<speak><emphasis level="reduced">test4</emphasis><emphasis level="reduced">test4</emphasis></speak>`,
 		},
 		{
 			name:     "reduced",
-			level:    EmphasisLevel("custom"),
+			level:    emphasis.Level("custom"),
 			text:     "test5",
 			expected: `<speak><emphasis level="custom">test5</emphasis><emphasis level="custom">test5</emphasis></speak>`,
 		},

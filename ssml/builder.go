@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
+	"github.com/mikeflynn/go-alexa/ssml/emphasis"
 	"github.com/mikeflynn/go-alexa/ssml/pause"
 )
 
@@ -39,7 +40,7 @@ func (builder *builder) AppendBreak(strength pause.Strength, duration time.Durat
 	return builder, nil
 }
 
-func (builder *builder) AppendEmphasis(level EmphasisLevel, text string) (*builder, error) {
+func (builder *builder) AppendEmphasis(level emphasis.Level, text string) (*builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<emphasis level=\"%s\">%s</emphasis>", level, text))
 	return builder, nil
 }
