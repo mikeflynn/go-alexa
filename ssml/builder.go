@@ -1,4 +1,4 @@
-package skillserver
+package ssml
 
 import (
 	"bytes"
