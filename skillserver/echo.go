@@ -170,6 +170,7 @@ type EchoRequest struct {
 	Version string      `json:"version"`
 	Session EchoSession `json:"session"`
 	Request EchoReqBody `json:"request"`
+	Context EchoContext `json:"context"`
 }
 
 type EchoSession struct {
@@ -183,6 +184,14 @@ type EchoSession struct {
 		UserID      string `json:"userId"`
 		AccessToken string `json:"accessToken,omitempty"`
 	} `json:"user"`
+}
+
+type EchoContext struct {
+	System struct {
+		Device struct {
+			DeviceId string `json:"deviceId,omitempty"`
+		} `json:"device,omitempty"`
+	} `json:"System,omitempty"`
 }
 
 type EchoReqBody struct {
