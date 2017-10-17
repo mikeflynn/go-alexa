@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"net/url"
+
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
 	"github.com/mikeflynn/go-alexa/ssml/emphasis"
 	"github.com/mikeflynn/go-alexa/ssml/pause"
@@ -30,10 +32,17 @@ func (builder *Builder) AppendAmazonEffect(effect amazoneffect.Effect, text stri
 }
 
 // AppendAmazonEffect appends an audio element to the builder's internal SSML string.
+// src must be a valid HTTPS url.
 // It returns the builder pointer and an error if the src is an invalid URL.
-// TODO: Validate src
 func (builder *Builder) AppendAudio(src string) (*Builder, error) {
-	builder.buffer.WriteString(fmt.Sprintf("<audio src=\"%s\"/>", src))
+	u, err := url.Parse(src)
+	if err != nil {
+		return nil, fmt.Errorf("src failed to parse into a valid URL: %v", err)
+	}
+	if u.Scheme != "https" {
+		return nil, fmt.Errorf("src must be a HTTPS URL. Scheme %s not valid", u.Scheme)
+	}
+	builder.buffer.WriteString(fmt.Sprintf("<audio src=\"%s\"/>", u.String()))
 	return builder, nil
 }
 

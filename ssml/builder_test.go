@@ -70,15 +70,49 @@ func TestBuilder_AppendAmazonEffect(t *testing.T) {
 }
 
 func TestBuilder_AppendAudio(t *testing.T) {
-	b, _ := NewBuilder()
+	tests := []struct {
+		name     string
+		src      string
+		err      bool
+		expected string
+	}{
+		{
+			name:     "happyPath",
+			src:      "https://domain.tld",
+			err:      false,
+			expected: `<speak><audio src="https://domain.tld"/><audio src="https://domain.tld"/></speak>`,
+		},
+		{
+			name:     "nonHTTPSUrl",
+			src:      "http://domain.tld",
+			err:      true,
+			expected: `<speak></speak>`,
+		},
+		{
+			name:     "badUrl",
+			src:      "notarealurl",
+			err:      true,
+			expected: `<speak></speak>`,
+		},
+	}
 
-	b.AppendAudio("source1")
-	b.AppendAudio("source2")
+	for _, test := range tests {
+		b, _ := NewBuilder()
 
-	actual := b.Build()
-	expected := `<speak><audio src="source1"/><audio src="source2"/></speak>`
-	if actual != expected {
-		t.Errorf("output mismatch: expected %s, got %s", expected, actual)
+		_, err := b.AppendAudio(test.src)
+		if (err != nil) != test.err {
+			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
+		}
+
+		_, err = b.AppendAudio(test.src)
+		if (err != nil) != test.err {
+			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
+		}
+
+		actual := b.Build()
+		if actual != test.expected {
+			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
+		}
 	}
 }
 
