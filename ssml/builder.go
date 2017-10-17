@@ -3,9 +3,9 @@ package ssml
 import (
 	"bytes"
 	"fmt"
-	"time"
-
 	"net/url"
+	"strings"
+	"time"
 
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
 	"github.com/mikeflynn/go-alexa/ssml/emphasis"
@@ -78,10 +78,63 @@ func (builder *Builder) AppendParagraph(text string) (*Builder, error) {
 }
 
 // AppendProsody appends a prosody element to the builder's internal SSML string.
-// It returns the builder pointer and an error if any parameters fall outside their accepted ranges.
-// TODO: Validate parameters
-func (builder *Builder) AppendProsody(rate prosody.Rate, pitch prosody.Pitch, volume prosody.Volume, text string) (*Builder, error) {
-	builder.buffer.WriteString(fmt.Sprintf("<prosody rate=\"%s\" pitch=\"%s\" volume=\"%s\">%s</prosody>", rate, pitch, volume, text))
+// rate must either be nil or a Rate (from the prosody.Rate sub-package) or an int. If nil no rate value is included
+// in the prosody element.
+// pitch must either be nil or a Pitch (from the prosody.Pitch sub-package) or an int. If nil no pitch value is
+// included in the prosody element.
+// volume must either be nil or a Volume (from the prosody.Volume sub-package) or an int. If nil no volume value is
+// included in the prosody element.
+// It returns the builder pointer and an error if a parameter is of an invalid type.
+func (builder *Builder) AppendProsody(rate, pitch, volume interface{}, text string) (*Builder, error) {
+	src := ""
+	if rate != nil {
+		rateStr, ok := rate.(prosody.Rate)
+		if !ok {
+			ratePercent, ok := rate.(int)
+			if !ok {
+				return builder, fmt.Errorf("unsupported rate type. must be either prosody.Rate or int")
+			}
+			src += fmt.Sprintf("rate=\"%d%%\" ", ratePercent)
+		} else {
+			src += fmt.Sprintf("rate=\"%s\" ", rateStr)
+		}
+	}
+
+	if pitch != nil {
+		pitchStr, ok := pitch.(prosody.Pitch)
+		if !ok {
+			pitchPercent, ok := pitch.(int)
+			if !ok {
+				return builder, fmt.Errorf("unsupported pitch type. must be either prosody.Pitch or int")
+			}
+			sign := ""
+			if pitchPercent > 0 {
+				sign = "+"
+			}
+			src += fmt.Sprintf("pitch=\"%s%d%%\" ", sign, pitchPercent)
+		} else {
+			src += fmt.Sprintf("pitch=\"%s\" ", pitchStr)
+		}
+	}
+
+	if volume != nil {
+		volumeStr, ok := volume.(prosody.Volume)
+		if !ok {
+			volumeDb, ok := volume.(int)
+			if !ok {
+				return builder, fmt.Errorf("unsupported volume type. must be either prosody.Volume or int")
+			}
+			sign := ""
+			if volumeDb > 0 {
+				sign = "+"
+			}
+			src += fmt.Sprintf("volume=\"%s%ddB\" ", sign, volumeDb)
+		} else {
+			src += fmt.Sprintf("volume=\"%s\" ", volumeStr)
+		}
+	}
+
+	builder.buffer.WriteString(fmt.Sprintf("<prosody %s>%s</prosody>", strings.TrimSpace(src), text))
 	return builder, nil
 }
 

@@ -268,9 +268,10 @@ func TestBuilder_AppendParagraph(t *testing.T) {
 func TestBuilder_AppendProsody(t *testing.T) {
 	tests := []struct {
 		name     string
-		rate     prosody.Rate
-		pitch    prosody.Pitch
-		volume   prosody.Volume
+		rate     interface{}
+		pitch    interface{}
+		volume   interface{}
+		err      bool
 		expected string
 	}{
 		{
@@ -278,6 +279,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateXSlow,
 			pitch:    prosody.PitchXLow,
 			volume:   prosody.VolumeSilent,
+			err:      false,
 			expected: `<speak><prosody rate="x-slow" pitch="x-low" volume="silent">text1</prosody><prosody rate="x-slow" pitch="x-low" volume="silent">text2</prosody></speak>`,
 		},
 		{
@@ -285,6 +287,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateSlow,
 			pitch:    prosody.PitchLow,
 			volume:   prosody.VolumeXSoft,
+			err:      false,
 			expected: `<speak><prosody rate="slow" pitch="low" volume="x-soft">text1</prosody><prosody rate="slow" pitch="low" volume="x-soft">text2</prosody></speak>`,
 		},
 		{
@@ -292,6 +295,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateMedium,
 			pitch:    prosody.PitchMedium,
 			volume:   prosody.VolumeSoft,
+			err:      false,
 			expected: `<speak><prosody rate="medium" pitch="medium" volume="soft">text1</prosody><prosody rate="medium" pitch="medium" volume="soft">text2</prosody></speak>`,
 		},
 		{
@@ -299,6 +303,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateFast,
 			pitch:    prosody.PitchHigh,
 			volume:   prosody.VolumeMedium,
+			err:      false,
 			expected: `<speak><prosody rate="fast" pitch="high" volume="medium">text1</prosody><prosody rate="fast" pitch="high" volume="medium">text2</prosody></speak>`,
 		},
 		{
@@ -306,6 +311,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateXFast,
 			pitch:    prosody.PitchXHigh,
 			volume:   prosody.VolumeLoud,
+			err:      false,
 			expected: `<speak><prosody rate="x-fast" pitch="x-high" volume="loud">text1</prosody><prosody rate="x-fast" pitch="x-high" volume="loud">text2</prosody></speak>`,
 		},
 		{
@@ -313,6 +319,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateXFast,
 			pitch:    prosody.PitchXHigh,
 			volume:   prosody.VolumeXLoud,
+			err:      false,
 			expected: `<speak><prosody rate="x-fast" pitch="x-high" volume="x-loud">text1</prosody><prosody rate="x-fast" pitch="x-high" volume="x-loud">text2</prosody></speak>`,
 		},
 		{
@@ -320,15 +327,119 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.Rate("custom rate"),
 			pitch:    prosody.Pitch("custom pitch"),
 			volume:   prosody.Volume("custom volume"),
+			err:      false,
 			expected: `<speak><prosody rate="custom rate" pitch="custom pitch" volume="custom volume">text1</prosody><prosody rate="custom rate" pitch="custom pitch" volume="custom volume">text2</prosody></speak>`,
+		},
+		{
+			name:     "onlyRate",
+			rate:     prosody.RateXSlow,
+			pitch:    nil,
+			volume:   nil,
+			err:      false,
+			expected: `<speak><prosody rate="x-slow">text1</prosody><prosody rate="x-slow">text2</prosody></speak>`,
+		},
+		{
+			name:     "onlyPitch",
+			rate:     nil,
+			pitch:    prosody.PitchXLow,
+			volume:   nil,
+			err:      false,
+			expected: `<speak><prosody pitch="x-low">text1</prosody><prosody pitch="x-low">text2</prosody></speak>`,
+		},
+		{
+			name:     "onlyVolume",
+			rate:     nil,
+			pitch:    nil,
+			volume:   prosody.VolumeSilent,
+			err:      false,
+			expected: `<speak><prosody volume="silent">text1</prosody><prosody volume="silent">text2</prosody></speak>`,
+		},
+		{
+			name:     "percentageRate",
+			rate:     110,
+			pitch:    nil,
+			volume:   nil,
+			err:      false,
+			expected: `<speak><prosody rate="110%">text1</prosody><prosody rate="110%">text2</prosody></speak>`,
+		},
+		{
+			name:     "positivePercentagePitch",
+			rate:     nil,
+			pitch:    10,
+			volume:   nil,
+			err:      false,
+			expected: `<speak><prosody pitch="+10%">text1</prosody><prosody pitch="+10%">text2</prosody></speak>`,
+		},
+		{
+			name:     "negativePercentagePitch",
+			rate:     nil,
+			pitch:    -10,
+			volume:   nil,
+			err:      false,
+			expected: `<speak><prosody pitch="-10%">text1</prosody><prosody pitch="-10%">text2</prosody></speak>`,
+		},
+		{
+			name:     "positiveDbVolume",
+			rate:     nil,
+			pitch:    nil,
+			volume:   4,
+			err:      false,
+			expected: `<speak><prosody volume="+4dB">text1</prosody><prosody volume="+4dB">text2</prosody></speak>`,
+		},
+		{
+			name:     "negativeDbVolume",
+			rate:     nil,
+			pitch:    nil,
+			volume:   -4,
+			err:      false,
+			expected: `<speak><prosody volume="-4dB">text1</prosody><prosody volume="-4dB">text2</prosody></speak>`,
+		},
+		{
+			name:     "allNil",
+			rate:     nil,
+			pitch:    nil,
+			volume:   nil,
+			err:      false,
+			expected: `<speak><prosody >text1</prosody><prosody >text2</prosody></speak>`,
+		},
+		{
+			name:     "invalidRateType",
+			rate:     true,
+			pitch:    nil,
+			volume:   nil,
+			err:      true,
+			expected: `<speak></speak>`,
+		},
+		{
+			name:     "invalidPitchType",
+			rate:     nil,
+			pitch:    true,
+			volume:   nil,
+			err:      true,
+			expected: `<speak></speak>`,
+		},
+		{
+			name:     "invalidVolumeType",
+			rate:     nil,
+			pitch:    nil,
+			volume:   true,
+			err:      true,
+			expected: `<speak></speak>`,
 		},
 	}
 
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		b.AppendProsody(test.rate, test.pitch, test.volume, "text1")
-		b.AppendProsody(test.rate, test.pitch, test.volume, "text2")
+		_, err := b.AppendProsody(test.rate, test.pitch, test.volume, "text1")
+		if (err != nil) != test.err {
+			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
+		}
+
+		_, err = b.AppendProsody(test.rate, test.pitch, test.volume, "text2")
+		if (err != nil) != test.err {
+			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
+		}
 
 		actual := b.Build()
 		if actual != test.expected {
