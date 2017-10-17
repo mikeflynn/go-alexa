@@ -99,12 +99,12 @@ func TestBuilder_AppendAudio(t *testing.T) {
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		_, err := b.AppendAudio(test.src)
+		err := b.AppendAudio(test.src)
 		if (err != nil) != test.err {
 			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
 		}
 
-		_, err = b.AppendAudio(test.src)
+		err = b.AppendAudio(test.src)
 		if (err != nil) != test.err {
 			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
 		}
@@ -188,12 +188,12 @@ func TestBuilder_AppendBreak(t *testing.T) {
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		_, err := b.AppendBreak(test.param)
+		err := b.AppendBreak(test.param)
 		if (err != nil) != test.err {
 			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
 		}
 
-		_, err = b.AppendBreak(test.param)
+		err = b.AppendBreak(test.param)
 		if (err != nil) != test.err {
 			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
 		}
@@ -431,12 +431,12 @@ func TestBuilder_AppendProsody(t *testing.T) {
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		_, err := b.AppendProsody(test.rate, test.pitch, test.volume, "text1")
+		err := b.AppendProsody(test.rate, test.pitch, test.volume, "text1")
 		if (err != nil) != test.err {
 			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
 		}
 
-		_, err = b.AppendProsody(test.rate, test.pitch, test.volume, "text2")
+		err = b.AppendProsody(test.rate, test.pitch, test.volume, "text2")
 		if (err != nil) != test.err {
 			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
 		}

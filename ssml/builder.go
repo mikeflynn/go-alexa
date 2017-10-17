@@ -19,62 +19,64 @@ func NewBuilder() (*Builder, error) {
 }
 
 // AppendPlainSpeech appends raw text to the builder's internal SSML string.
-func (builder *Builder) AppendPlainSpeech(text string) (*Builder, error) {
+// It returns a nil error.
+func (builder *Builder) AppendPlainSpeech(text string) error {
 	builder.buffer.WriteString(text)
-	return builder, nil
+	return nil
 }
 
 // AppendAmazonEffect appends an AmazonEffect to the builder's internal SSML string.
 // Valid Effects can be found in the amazoneffect sub-package
-func (builder *Builder) AppendAmazonEffect(effect amazoneffect.Effect, text string) (*Builder, error) {
+// It returns a nil error.
+func (builder *Builder) AppendAmazonEffect(effect amazoneffect.Effect, text string) error {
 	builder.buffer.WriteString(fmt.Sprintf("<amazon:effect name=\"%s\">%s</amazon:effect>", effect, text))
-	return builder, nil
+	return nil
 }
 
 // AppendAmazonEffect appends an audio element to the builder's internal SSML string.
 // src must be a valid HTTPS url.
-// It returns the builder pointer and an error if the src is an invalid URL.
-func (builder *Builder) AppendAudio(src string) (*Builder, error) {
+// It returns an error if the src is an invalid URL.
+func (builder *Builder) AppendAudio(src string) error {
 	u, err := url.Parse(src)
 	if err != nil {
-		return nil, fmt.Errorf("src failed to parse into a valid URL: %v", err)
+		return fmt.Errorf("src failed to parse into a valid URL: %v", err)
 	}
 	if u.Scheme != "https" {
-		return nil, fmt.Errorf("src must be a HTTPS URL. Scheme %s not valid", u.Scheme)
+		return fmt.Errorf("src must be a HTTPS URL. Scheme %s not valid", u.Scheme)
 	}
 	builder.buffer.WriteString(fmt.Sprintf("<audio src=\"%s\"/>", u.String()))
-	return builder, nil
+	return nil
 }
 
 // AppendAmazonEffect appends a break/pause element to the builder's internal SSML string.
 // strengthOrDuration must either be of type Strength (from the pause sub-package) or time.Duration
-// It returns the builder pointer and an error if strengthOrDuration is of an invalid type
-func (builder *Builder) AppendBreak(strengthOrDuration interface{}) (*Builder, error) {
+// It returns an error if strengthOrDuration is of an invalid type
+func (builder *Builder) AppendBreak(strengthOrDuration interface{}) error {
 	strength, ok := strengthOrDuration.(pause.Strength)
 	if !ok {
 		duration, ok := strengthOrDuration.(time.Duration)
 		if !ok {
-			return builder, fmt.Errorf("unsupported parameter type. must be either pause.Strength or time.Duration")
+			return fmt.Errorf("unsupported parameter type. must be either pause.Strength or time.Duration")
 		}
 		builder.buffer.WriteString(fmt.Sprintf("<break time=\"%dms\"/>", duration.Nanoseconds()/1e6))
-		return builder, nil
+		return nil
 	}
 	builder.buffer.WriteString(fmt.Sprintf("<break strength=\"%s\"/>", strength))
-	return builder, nil
+	return nil
 }
 
 // AppendEmphasis appends an emphasis element to the builder's internal SSML string.
-// It returns the builder pointer and a nil error.
-func (builder *Builder) AppendEmphasis(level emphasis.Level, text string) (*Builder, error) {
+// It returns a nil error.
+func (builder *Builder) AppendEmphasis(level emphasis.Level, text string) error {
 	builder.buffer.WriteString(fmt.Sprintf("<emphasis level=\"%s\">%s</emphasis>", level, text))
-	return builder, nil
+	return nil
 }
 
 // AppendParagraph appends a paragraph element to the builder's internal SSML string.
-// It returns the builder pointer and a nil error.
-func (builder *Builder) AppendParagraph(text string) (*Builder, error) {
+// It returns a nil error.
+func (builder *Builder) AppendParagraph(text string) error {
 	builder.buffer.WriteString(fmt.Sprintf("<p>%s</p>", text))
-	return builder, nil
+	return nil
 }
 
 // AppendProsody appends a prosody element to the builder's internal SSML string.
@@ -84,15 +86,15 @@ func (builder *Builder) AppendParagraph(text string) (*Builder, error) {
 // included in the prosody element.
 // volume must either be nil or a Volume (from the prosody.Volume sub-package) or an int. If nil no volume value is
 // included in the prosody element.
-// It returns the builder pointer and an error if a parameter is of an invalid type.
-func (builder *Builder) AppendProsody(rate, pitch, volume interface{}, text string) (*Builder, error) {
+// It returns an error if a parameter is of an invalid type.
+func (builder *Builder) AppendProsody(rate, pitch, volume interface{}, text string) error {
 	src := ""
 	if rate != nil {
 		rateStr, ok := rate.(prosody.Rate)
 		if !ok {
 			ratePercent, ok := rate.(int)
 			if !ok {
-				return builder, fmt.Errorf("unsupported rate type. must be either prosody.Rate or int")
+				return fmt.Errorf("unsupported rate type. must be either prosody.Rate or int")
 			}
 			src += fmt.Sprintf("rate=\"%d%%\" ", ratePercent)
 		} else {
@@ -105,7 +107,7 @@ func (builder *Builder) AppendProsody(rate, pitch, volume interface{}, text stri
 		if !ok {
 			pitchPercent, ok := pitch.(int)
 			if !ok {
-				return builder, fmt.Errorf("unsupported pitch type. must be either prosody.Pitch or int")
+				return fmt.Errorf("unsupported pitch type. must be either prosody.Pitch or int")
 			}
 			sign := ""
 			if pitchPercent > 0 {
@@ -122,7 +124,7 @@ func (builder *Builder) AppendProsody(rate, pitch, volume interface{}, text stri
 		if !ok {
 			volumeDb, ok := volume.(int)
 			if !ok {
-				return builder, fmt.Errorf("unsupported volume type. must be either prosody.Volume or int")
+				return fmt.Errorf("unsupported volume type. must be either prosody.Volume or int")
 			}
 			sign := ""
 			if volumeDb > 0 {
@@ -135,21 +137,21 @@ func (builder *Builder) AppendProsody(rate, pitch, volume interface{}, text stri
 	}
 
 	builder.buffer.WriteString(fmt.Sprintf("<prosody %s>%s</prosody>", strings.TrimSpace(src), text))
-	return builder, nil
+	return nil
 }
 
 // AppendSentence appends a sentence element to the builder's internal SSML string.
-// It returns the builder pointer and a nil error.
-func (builder *Builder) AppendSentence(text string) (*Builder, error) {
+// It returns a nil error.
+func (builder *Builder) AppendSentence(text string) error {
 	builder.buffer.WriteString(fmt.Sprintf("<s>%s</s>", text))
-	return builder, nil
+	return nil
 }
 
 // AppendSubstitution appends a substitution element to the builder's internal SSML string.
-// It returns the builder pointer and a nil error.
-func (builder *Builder) AppendSubstitution(alias, text string) (*Builder, error) {
+// It returns a nil error.
+func (builder *Builder) AppendSubstitution(alias, text string) error {
 	builder.buffer.WriteString(fmt.Sprintf("<sub alias=\"%s\">%s</sub>", alias, text))
-	return builder, nil
+	return nil
 }
 
 // Build builds the SSML string.
