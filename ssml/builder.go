@@ -26,7 +26,7 @@ func (builder *Builder) AppendPlainSpeech(text string) error {
 }
 
 // AppendAmazonEffect appends an AmazonEffect to the builder's internal SSML string.
-// Valid Effects can be found in the amazoneffect sub-package
+// Valid Effects can be found in the amazoneffect sub-package.
 // It returns a nil error.
 func (builder *Builder) AppendAmazonEffect(effect amazoneffect.Effect, text string) error {
 	builder.buffer.WriteString(fmt.Sprintf("<amazon:effect name=\"%s\">%s</amazon:effect>", effect, text))
@@ -49,8 +49,8 @@ func (builder *Builder) AppendAudio(src string) error {
 }
 
 // AppendAmazonEffect appends a break/pause element to the builder's internal SSML string.
-// strengthOrDuration must either be of type Strength (from the pause sub-package) or time.Duration
-// It returns an error if strengthOrDuration is of an invalid type
+// strengthOrDuration must either be of type Strength (from the pause sub-package) or time.Duration.
+// It returns an error if strengthOrDuration is of an invalid type.
 func (builder *Builder) AppendBreak(strengthOrDuration interface{}) error {
 	strength, ok := strengthOrDuration.(pause.Strength)
 	if !ok {
