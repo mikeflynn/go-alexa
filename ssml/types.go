@@ -2,6 +2,6 @@ package ssml
 
 import "bytes"
 
-type builder struct {
+type Builder struct {
 	buffer *bytes.Buffer
 }

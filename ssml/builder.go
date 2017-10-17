@@ -16,56 +16,56 @@ import (
  * https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/speech-synthesis-markup-language-ssml-reference
  */
 
-func NewBuilder() (*builder, error) {
-	return &builder{bytes.NewBufferString("")}, nil
+func NewBuilder() (*Builder, error) {
+	return &Builder{bytes.NewBufferString("")}, nil
 }
 
-func (builder *builder) AppendPlainSpeech(text string) (*builder, error) {
+func (builder *Builder) AppendPlainSpeech(text string) (*Builder, error) {
 	builder.buffer.WriteString(text)
 	return builder, nil
 }
 
-func (builder *builder) AppendAmazonEffect(effect amazoneffect.Effect, text string) (*builder, error) {
+func (builder *Builder) AppendAmazonEffect(effect amazoneffect.Effect, text string) (*Builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<amazon:effect name=\"%s\">%s</amazon:effect>", effect, text))
 	return builder, nil
 }
 
-func (builder *builder) AppendAudio(src string) (*builder, error) {
+func (builder *Builder) AppendAudio(src string) (*Builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<audio src=\"%s\"/>", src))
 	return builder, nil
 }
 
-func (builder *builder) AppendBreak(strength pause.Strength, duration time.Duration) (*builder, error) {
+func (builder *Builder) AppendBreak(strength pause.Strength, duration time.Duration) (*Builder, error) {
 	durationMs := duration.Nanoseconds() / 1e6
 	builder.buffer.WriteString(fmt.Sprintf("<break strength=\"%s\" time=\"%dms\"/>", strength, durationMs))
 	return builder, nil
 }
 
-func (builder *builder) AppendEmphasis(level emphasis.Level, text string) (*builder, error) {
+func (builder *Builder) AppendEmphasis(level emphasis.Level, text string) (*Builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<emphasis level=\"%s\">%s</emphasis>", level, text))
 	return builder, nil
 }
 
-func (builder *builder) AppendParagraph(text string) (*builder, error) {
+func (builder *Builder) AppendParagraph(text string) (*Builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<p>%s</p>", text))
 	return builder, nil
 }
 
-func (builder *builder) AppendProsody(rate prosody.Rate, pitch prosody.Pitch, volume prosody.Volume, text string) (*builder, error) {
+func (builder *Builder) AppendProsody(rate prosody.Rate, pitch prosody.Pitch, volume prosody.Volume, text string) (*Builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<prosody rate=\"%s\" pitch=\"%s\" volume=\"%s\">%s</prosody>", rate, pitch, volume, text))
 	return builder, nil
 }
 
-func (builder *builder) AppendSentence(text string) (*builder, error) {
+func (builder *Builder) AppendSentence(text string) (*Builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<s>%s</s>", text))
 	return builder, nil
 }
 
-func (builder *builder) AppendSubstitution(alias, text string) (*builder, error) {
+func (builder *Builder) AppendSubstitution(alias, text string) (*Builder, error) {
 	builder.buffer.WriteString(fmt.Sprintf("<sub alias=\"%s\">%s</sub>", alias, text))
 	return builder, nil
 }
 
-func (builder *builder) Build() string {
+func (builder *Builder) Build() string {
 	return fmt.Sprintf("<speak>%s</speak>", builder.buffer.String())
 }
