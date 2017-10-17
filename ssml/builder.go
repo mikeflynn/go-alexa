@@ -11,11 +11,6 @@ import (
 	"github.com/mikeflynn/go-alexa/ssml/prosody"
 )
 
-/**
- * Details about the Speech Synthesis Markup Language (SSML) can be found on this page:
- * https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/speech-synthesis-markup-language-ssml-reference
- */
-
 func NewBuilder() (*Builder, error) {
 	return &Builder{bytes.NewBufferString("")}, nil
 }
@@ -35,9 +30,17 @@ func (builder *Builder) AppendAudio(src string) (*Builder, error) {
 	return builder, nil
 }
 
-func (builder *Builder) AppendBreak(strength pause.Strength, duration time.Duration) (*Builder, error) {
-	durationMs := duration.Nanoseconds() / 1e6
-	builder.buffer.WriteString(fmt.Sprintf("<break strength=\"%s\" time=\"%dms\"/>", strength, durationMs))
+func (builder *Builder) AppendBreak(strengthOrDuration interface{}) (*Builder, error) {
+	strength, ok := strengthOrDuration.(pause.Strength)
+	if !ok {
+		duration, ok := strengthOrDuration.(time.Duration)
+		if !ok {
+			return builder, fmt.Errorf("unsupported parameter type. must be either pause.Strength or time.Duration")
+		}
+		builder.buffer.WriteString(fmt.Sprintf("<break time=\"%dms\"/>", duration.Nanoseconds()/1e6))
+		return builder, nil
+	}
+	builder.buffer.WriteString(fmt.Sprintf("<break strength=\"%s\"/>", strength))
 	return builder, nil
 }
 

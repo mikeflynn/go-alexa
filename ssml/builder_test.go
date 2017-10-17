@@ -2,6 +2,7 @@ package ssml
 
 import (
 	"testing"
+
 	"time"
 
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
@@ -84,65 +85,84 @@ func TestBuilder_AppendAudio(t *testing.T) {
 func TestBuilder_AppendBreak(t *testing.T) {
 	tests := []struct {
 		name     string
-		strength pause.Strength
-		duration time.Duration
+		param    interface{}
+		err      bool
 		expected string
 	}{
 		{
 			name:     "default",
-			strength: pause.Default,
-			duration: time.Second,
-			expected: `<speak><break strength="medium" time="1000ms"/><break strength="medium" time="1000ms"/></speak>`,
+			param:    pause.Default,
+			err:      false,
+			expected: `<speak><break strength="medium"/><break strength="medium"/></speak>`,
 		},
 		{
 			name:     "none",
-			strength: pause.None,
-			duration: time.Second / 2,
-			expected: `<speak><break strength="none" time="500ms"/><break strength="none" time="500ms"/></speak>`,
+			param:    pause.None,
+			err:      false,
+			expected: `<speak><break strength="none"/><break strength="none"/></speak>`,
 		},
 		{
 			name:     "x-weak",
-			strength: pause.XWeak,
-			duration: time.Second * 2,
-			expected: `<speak><break strength="x-weak" time="2000ms"/><break strength="x-weak" time="2000ms"/></speak>`,
+			param:    pause.XWeak,
+			err:      false,
+			expected: `<speak><break strength="x-weak"/><break strength="x-weak"/></speak>`,
 		},
 		{
 			name:     "weak",
-			strength: pause.Weak,
-			duration: time.Second * 3,
-			expected: `<speak><break strength="weak" time="3000ms"/><break strength="weak" time="3000ms"/></speak>`,
+			param:    pause.Weak,
+			err:      false,
+			expected: `<speak><break strength="weak"/><break strength="weak"/></speak>`,
 		},
 		{
 			name:     "medium",
-			strength: pause.Medium,
-			duration: time.Second * 4,
-			expected: `<speak><break strength="medium" time="4000ms"/><break strength="medium" time="4000ms"/></speak>`,
+			param:    pause.Medium,
+			err:      false,
+			expected: `<speak><break strength="medium"/><break strength="medium"/></speak>`,
 		},
 		{
 			name:     "strong",
-			strength: pause.Strong,
-			duration: time.Second * 5,
-			expected: `<speak><break strength="strong" time="5000ms"/><break strength="strong" time="5000ms"/></speak>`,
+			param:    pause.Strong,
+			err:      false,
+			expected: `<speak><break strength="strong"/><break strength="strong"/></speak>`,
 		},
 		{
 			name:     "x-strong",
-			strength: pause.XStrong,
-			duration: time.Second * 6,
-			expected: `<speak><break strength="x-strong" time="6000ms"/><break strength="x-strong" time="6000ms"/></speak>`,
+			param:    pause.XStrong,
+			err:      false,
+			expected: `<speak><break strength="x-strong"/><break strength="x-strong"/></speak>`,
 		},
 		{
 			name:     "custom",
-			strength: pause.Strength("custom"),
-			duration: time.Second * 7,
-			expected: `<speak><break strength="custom" time="7000ms"/><break strength="custom" time="7000ms"/></speak>`,
+			param:    pause.Strength("custom"),
+			err:      false,
+			expected: `<speak><break strength="custom"/><break strength="custom"/></speak>`,
+		},
+		{
+			name:     "time",
+			param:    time.Second,
+			err:      false,
+			expected: `<speak><break time="1000ms"/><break time="1000ms"/></speak>`,
+		},
+		{
+			name:     "invalidType",
+			param:    4,
+			err:      true,
+			expected: `<speak></speak>`,
 		},
 	}
 
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		b.AppendBreak(test.strength, test.duration)
-		b.AppendBreak(test.strength, test.duration)
+		_, err := b.AppendBreak(test.param)
+		if (err != nil) != test.err {
+			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
+		}
+
+		_, err = b.AppendBreak(test.param)
+		if (err != nil) != test.err {
+			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
+		}
 
 		actual := b.Build()
 		if actual != test.expected {
