@@ -1,6 +1,7 @@
 package ssml
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -501,6 +502,35 @@ func TestBuilder_AppendSubstitution(t *testing.T) {
 	expected := `<speak><sub alias="alias1">text1</sub><sub alias="alias2">text2</sub></speak>`
 	if actual != expected {
 		t.Errorf("output mismatch: expected %s, got %s", expected, actual)
+	}
+}
+
+func TestAppendErrorConcurrency(t *testing.T) {
+	var (
+		numOfWorkers         = 100
+		numOfErrorsPerWorker = 100
+	)
+
+	b, _ := NewBuilder()
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < numOfWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			for i := 0; i < numOfErrorsPerWorker; i++ {
+				b.appendError(errors.New("error"))
+			}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	_, errs := b.Build()
+	actual := len(errs)
+	expected := numOfWorkers * numOfErrorsPerWorker
+	if actual != expected {
+		t.Errorf("error count mismatch: expected %d, got %d", actual, expected)
 	}
 }
 
