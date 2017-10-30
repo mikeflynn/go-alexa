@@ -116,11 +116,13 @@ func (builder *Builder) AppendProsody(rate, pitch, volume interface{}, text stri
 			if !ok {
 				return builder.appendError(errors.New("unsupported pitch type: must be either prosody.Pitch or int"))
 			}
-			sign := ""
+
 			if pitchPercent > 0 {
-				sign = "+"
+				src += fmt.Sprintf(" pitch=\"+%d%%\"", pitchPercent)
+			} else {
+				src += fmt.Sprintf(" pitch=\"%d%%\"", pitchPercent)
 			}
-			src += fmt.Sprintf(" pitch=\"%s%d%%\"", sign, pitchPercent)
+
 		} else {
 			src += fmt.Sprintf(" pitch=\"%s\"", pitchStr)
 		}
@@ -133,11 +135,11 @@ func (builder *Builder) AppendProsody(rate, pitch, volume interface{}, text stri
 			if !ok {
 				return builder.appendError(errors.New("unsupported volume type: must be either prosody.Volume or int"))
 			}
-			sign := ""
 			if volumeDb > 0 {
-				sign = "+"
+				src += fmt.Sprintf(" volume=\"+%ddB\"", volumeDb)
+			} else {
+				src += fmt.Sprintf(" volume=\"%ddB\"", volumeDb)
 			}
-			src += fmt.Sprintf(" volume=\"%s%ddB\"", sign, volumeDb)
 		} else {
 			src += fmt.Sprintf(" volume=\"%s\"", volumeStr)
 		}

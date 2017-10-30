@@ -16,7 +16,8 @@ func ExampleNewBuilder_output() {
 	b, _ := NewBuilder()
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak></speak>
 }
 
@@ -28,7 +29,8 @@ func ExampleBuilder_AppendPlainSpeech_output() {
 	b.AppendPlainSpeech("Hello World!")
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak>Hello World!</speak>
 }
 
@@ -40,7 +42,8 @@ func ExampleBuilder_AppendAmazonEffect_output() {
 	b.AppendAmazonEffect(amazoneffect.Whispered, "This is whispered")
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><amazon:effect name="whispered">This is whispered</amazon:effect></speak>
 }
 
@@ -52,7 +55,8 @@ func ExampleBuilder_AppendAudio_output() {
 	b.AppendAudio("https://domain.tld/dummy.mp3")
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><audio src="https://domain.tld/dummy.mp3"/></speak>
 }
 
@@ -64,7 +68,8 @@ func ExampleBuilder_AppendBreak_Strength_output() {
 	b.AppendBreak(pause.Strong)
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><break strength="strong"/></speak>
 }
 
@@ -76,7 +81,8 @@ func ExampleBuilder_AppendBreak_Time_output() {
 	b.AppendBreak(time.Second)
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><break time="1000ms"/></speak>
 }
 
@@ -88,7 +94,8 @@ func ExampleBuilder_AppendEmphasis_output() {
 	b.AppendEmphasis(emphasis.Reduced, "reduced emphasis")
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><emphasis level="reduced">reduced emphasis</emphasis></speak>
 }
 
@@ -100,7 +107,8 @@ func ExampleBuilder_AppendParagraph_output() {
 	b.AppendParagraph("sample paragraph")
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><p>sample paragraph</p></speak>
 }
 
@@ -112,7 +120,8 @@ func ExampleBuilder_AppendProsody_Rate_output() {
 	b.AppendProsody(prosody.RateMedium, nil, nil, "this is said at a medium rate")
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><prosody rate="medium">this is said at a medium rate</prosody></speak>
 }
 
@@ -124,7 +133,8 @@ func ExampleBuilder_AppendProsody_Constants_output() {
 	b.AppendProsody(prosody.RateSlow, prosody.PitchLow, prosody.VolumeXLoud, "this is said slowly, in a low pitch, but loudly")
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><prosody rate="slow" pitch="low" volume="x-loud">this is said slowly, in a low pitch, but loudly</prosody></speak>
 }
 
@@ -133,11 +143,12 @@ func ExampleBuilder_AppendProsody_Int_output() {
 	b, _ := NewBuilder()
 
 	// Append a prosody element using ints.
-	b.AppendProsody(110, -10, 4, "this is said slightly quicker than normal (110%), in a lower pitch (-10%), loudly (+4dB)")
+	b.AppendProsody(110, -10, 4, "this is said slightly quicker than normal (110%), in a lower pitch (-10%), and loudly (+4dB)")
 
 	// Print the built string.
-	fmt.Print(b.Build())
-	// Output: <speak><prosody rate="110%" pitch="-10%" volume="+4dB">this is said slightly quicker than normal (110%), in a lower pitch (-10%), loudly (+4dB)</prosody></speak>
+	output, _ := b.Build()
+	fmt.Print(output)
+	// Output: <speak><prosody rate="110%" pitch="-10%" volume="+4dB">this is said slightly quicker than normal (110%), in a lower pitch (-10%), and loudly (+4dB)</prosody></speak>
 }
 
 func ExampleBuilder_AppendSentence_output() {
@@ -148,7 +159,8 @@ func ExampleBuilder_AppendSentence_output() {
 	b.AppendSentence("this is a sentence")
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><s>this is a sentence</s></speak>
 }
 
@@ -160,6 +172,7 @@ func ExampleBuilder_AppendSubstitution_output() {
 	b.AppendSubstitution("alias", "replacement")
 
 	// Print the built string.
-	fmt.Print(b.Build())
+	output, _ := b.Build()
+	fmt.Print(output)
 	// Output: <speak><sub alias="alias">replacement</sub></speak>
 }
