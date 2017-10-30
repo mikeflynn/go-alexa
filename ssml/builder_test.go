@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"fmt"
-
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
 	"github.com/mikeflynn/go-alexa/ssml/emphasis"
 	"github.com/mikeflynn/go-alexa/ssml/pause"
@@ -21,7 +19,7 @@ func TestNewBuilder_ReturnsEmptySSML(t *testing.T) {
 	}
 
 	actual, errs := b.Build()
-	if errs != nil {
+	if !errsEqual(nil, errs) {
 		t.Errorf("error mismatch: expected nil, got %v", errs)
 	}
 
@@ -31,19 +29,13 @@ func TestNewBuilder_ReturnsEmptySSML(t *testing.T) {
 	}
 }
 
-func appendABunchOfStrings(b *Builder) {
-	for i := 0; i < 100; i++ {
-		b.AppendSentence(fmt.Sprintf("Append%d\n", i))
-	}
-}
-
 func TestBuilder_AppendPlainSpeech(t *testing.T) {
 	b, _ := NewBuilder()
 
 	b.AppendPlainSpeech("hello ").AppendPlainSpeech("world")
 
 	actual, errs := b.Build()
-	if errs != nil {
+	if !errsEqual(nil, errs) {
 		t.Errorf("error mismatch: expected nil, got %v", errs)
 	}
 
@@ -77,7 +69,7 @@ func TestBuilder_AppendAmazonEffect(t *testing.T) {
 		b.AppendAmazonEffect(test.effect, "text1").AppendAmazonEffect(test.effect, "text2")
 
 		actual, errs := b.Build()
-		if errs != nil {
+		if !errsEqual(nil, errs) {
 			t.Errorf("%s: error mismatch: expected nil, got %v", test.name, errs)
 		}
 
@@ -104,17 +96,17 @@ func TestBuilder_AppendAudio(t *testing.T) {
 			name: "nonHTTPSUrl",
 			src:  "http://domain.tld",
 			errs: []error{
-				errors.New("src must be a HTTPS URL: Scheme http not valid"),
-				errors.New("src must be a HTTPS URL: Scheme http not valid"),
+				errors.New("unsupported URL scheme type: must be https"),
+				errors.New("unsupported URL scheme type: must be https"),
 			},
 			expected: `<speak></speak>`,
 		},
 		{
 			name: "badUrl",
-			src:  "notarealurl",
+			src:  "%notarealurl",
 			errs: []error{
-				errors.New("src must be a HTTPS URL: Scheme  not valid"),
-				errors.New("src must be a HTTPS URL: Scheme  not valid"),
+				errors.New(`failed to parse src into a valid URL: parse %notarealurl: invalid URL escape "%no"`),
+				errors.New(`failed to parse src into a valid URL: parse %notarealurl: invalid URL escape "%no"`),
 			},
 			expected: `<speak></speak>`,
 		},
@@ -126,8 +118,8 @@ func TestBuilder_AppendAudio(t *testing.T) {
 		b.AppendAudio(test.src).AppendAudio(test.src)
 
 		actual, errs := b.Build()
-		if len(test.errs) != len(errs) {
-			t.Errorf("%s: error mismatch: expected %v, got %v", test.name, test.errs, errs)
+		if !errsEqual(test.errs, errs) {
+			t.Errorf("%s: error mismatch: expected %+v, got %+v", test.name, test.errs, errs)
 		}
 
 		if actual != test.expected {
@@ -214,7 +206,7 @@ func TestBuilder_AppendBreak(t *testing.T) {
 		b.AppendBreak(test.param).AppendBreak(test.param)
 
 		actual, errs := b.Build()
-		if len(test.errs) != len(errs) {
+		if !errsEqual(test.errs, errs) {
 			t.Errorf("%s: error mismatch: expected %v, got %v", test.name, test.errs, errs)
 		}
 
@@ -264,7 +256,7 @@ func TestBuilder_AppendEmphasis(t *testing.T) {
 		b.AppendEmphasis(test.level, "text1").AppendEmphasis(test.level, "text2")
 
 		actual, errs := b.Build()
-		if errs != nil {
+		if !errsEqual(nil, errs) {
 			t.Errorf("%s: error mismatch: expected nil, got %v", test.name, errs)
 		}
 
@@ -280,7 +272,7 @@ func TestBuilder_AppendParagraph(t *testing.T) {
 	b.AppendParagraph("text1").AppendParagraph("text2")
 
 	actual, errs := b.Build()
-	if errs != nil {
+	if !errsEqual(nil, errs) {
 		t.Errorf("error mismatch: expected nil, got %v", errs)
 	}
 
@@ -468,7 +460,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 		b.AppendProsody(test.rate, test.pitch, test.volume, "text1").AppendProsody(test.rate, test.pitch, test.volume, "text2")
 
 		actual, errs := b.Build()
-		if len(test.errs) != len(errs) {
+		if !errsEqual(test.errs, errs) {
 			t.Errorf("%s: error mismatch: expected %v, got %v", test.name, test.errs, errs)
 		}
 
@@ -485,7 +477,7 @@ func TestBuilder_AppendSentence(t *testing.T) {
 	b.AppendSentence("text2")
 
 	actual, errs := b.Build()
-	if errs != nil {
+	if !errsEqual(nil, errs) {
 		t.Errorf("error mismatch: expected nil, got %v", errs)
 	}
 
@@ -502,7 +494,7 @@ func TestBuilder_AppendSubstitution(t *testing.T) {
 	b.AppendSubstitution("alias2", "text2")
 
 	actual, errs := b.Build()
-	if errs != nil {
+	if !errsEqual(nil, errs) {
 		t.Errorf("error mismatch: expected nil, got %v", errs)
 	}
 
@@ -510,4 +502,16 @@ func TestBuilder_AppendSubstitution(t *testing.T) {
 	if actual != expected {
 		t.Errorf("output mismatch: expected %s, got %s", expected, actual)
 	}
+}
+
+func errsEqual(errs1, errs2 []error) bool {
+	if len(errs1) != len(errs2) {
+		return false
+	}
+	for i, _ := range errs1 {
+		if errs1[i].Error() != errs2[i].Error() {
+			return false
+		}
+	}
+	return true
 }

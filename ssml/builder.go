@@ -43,10 +43,10 @@ func (builder *Builder) AppendAmazonEffect(effect amazoneffect.Effect, text stri
 func (builder *Builder) AppendAudio(src string) *Builder {
 	u, err := url.Parse(src)
 	if err != nil {
-		return builder.appendError(fmt.Errorf("src failed to parse into a valid URL: %v", err))
+		return builder.appendError(fmt.Errorf("failed to parse src into a valid URL: %v", err))
 	}
 	if u.Scheme != "https" {
-		return builder.appendError(fmt.Errorf("src must be a HTTPS URL: Scheme %s not valid", u.Scheme))
+		return builder.appendError(errors.New("unsupported URL scheme type: must be https"))
 	}
 	builder.buffer.WriteString(fmt.Sprintf("<audio src=\"%s\"/>", u.String()))
 	return builder
