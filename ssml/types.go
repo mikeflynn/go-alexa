@@ -2,8 +2,13 @@
 // Details about SSML can be found on this page: https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/speech-synthesis-markup-language-ssml-reference
 package ssml
 
-import "bytes"
+import (
+	"bytes"
+	"sync"
+)
 
 type Builder struct {
 	buffer *bytes.Buffer
+	lock   sync.RWMutex
+	errs   []error
 }

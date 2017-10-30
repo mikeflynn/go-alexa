@@ -2,13 +2,15 @@ package ssml
 
 import (
 	"testing"
-
 	"time"
+
+	"fmt"
 
 	"github.com/mikeflynn/go-alexa/ssml/amazoneffect"
 	"github.com/mikeflynn/go-alexa/ssml/emphasis"
 	"github.com/mikeflynn/go-alexa/ssml/pause"
 	"github.com/mikeflynn/go-alexa/ssml/prosody"
+	"github.com/pkg/errors"
 )
 
 func TestNewBuilder_ReturnsEmptySSML(t *testing.T) {
@@ -18,20 +20,33 @@ func TestNewBuilder_ReturnsEmptySSML(t *testing.T) {
 		t.Fatalf("failed to get new builder: expected no error, got :%v", err)
 	}
 
-	actual := b.Build()
+	actual, errs := b.Build()
+	if errs != nil {
+		t.Errorf("error mismatch: expected nil, got %v", errs)
+	}
+
 	expected := "<speak></speak>"
 	if actual != expected {
 		t.Errorf("output mismatch: expected %s, got %s", expected, actual)
 	}
 }
 
+func appendABunchOfStrings(b *Builder) {
+	for i := 0; i < 100; i++ {
+		b.AppendSentence(fmt.Sprintf("Append%d\n", i))
+	}
+}
+
 func TestBuilder_AppendPlainSpeech(t *testing.T) {
 	b, _ := NewBuilder()
 
-	b.AppendPlainSpeech("hello ")
-	b.AppendPlainSpeech("world")
+	b.AppendPlainSpeech("hello ").AppendPlainSpeech("world")
 
-	actual := b.Build()
+	actual, errs := b.Build()
+	if errs != nil {
+		t.Errorf("error mismatch: expected nil, got %v", errs)
+	}
+
 	expected := "<speak>hello world</speak>"
 	if actual != expected {
 		t.Errorf("output mismatch: expected %s, got %s", expected, actual)
@@ -59,10 +74,13 @@ func TestBuilder_AppendAmazonEffect(t *testing.T) {
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		b.AppendAmazonEffect(test.effect, "text1")
-		b.AppendAmazonEffect(test.effect, "text2")
+		b.AppendAmazonEffect(test.effect, "text1").AppendAmazonEffect(test.effect, "text2")
 
-		actual := b.Build()
+		actual, errs := b.Build()
+		if errs != nil {
+			t.Errorf("%s: error mismatch: expected nil, got %v", test.name, errs)
+		}
+
 		if actual != test.expected {
 			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
 		}
@@ -73,25 +91,31 @@ func TestBuilder_AppendAudio(t *testing.T) {
 	tests := []struct {
 		name     string
 		src      string
-		err      bool
+		errs     []error
 		expected string
 	}{
 		{
 			name:     "happyPath",
 			src:      "https://domain.tld",
-			err:      false,
+			errs:     nil,
 			expected: `<speak><audio src="https://domain.tld"/><audio src="https://domain.tld"/></speak>`,
 		},
 		{
-			name:     "nonHTTPSUrl",
-			src:      "http://domain.tld",
-			err:      true,
+			name: "nonHTTPSUrl",
+			src:  "http://domain.tld",
+			errs: []error{
+				errors.New("src must be a HTTPS URL: Scheme http not valid"),
+				errors.New("src must be a HTTPS URL: Scheme http not valid"),
+			},
 			expected: `<speak></speak>`,
 		},
 		{
-			name:     "badUrl",
-			src:      "notarealurl",
-			err:      true,
+			name: "badUrl",
+			src:  "notarealurl",
+			errs: []error{
+				errors.New("src must be a HTTPS URL: Scheme  not valid"),
+				errors.New("src must be a HTTPS URL: Scheme  not valid"),
+			},
 			expected: `<speak></speak>`,
 		},
 	}
@@ -99,17 +123,13 @@ func TestBuilder_AppendAudio(t *testing.T) {
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		err := b.AppendAudio(test.src)
-		if (err != nil) != test.err {
-			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
+		b.AppendAudio(test.src).AppendAudio(test.src)
+
+		actual, errs := b.Build()
+		if len(test.errs) != len(errs) {
+			t.Errorf("%s: error mismatch: expected %v, got %v", test.name, test.errs, errs)
 		}
 
-		err = b.AppendAudio(test.src)
-		if (err != nil) != test.err {
-			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
-		}
-
-		actual := b.Build()
 		if actual != test.expected {
 			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
 		}
@@ -120,67 +140,70 @@ func TestBuilder_AppendBreak(t *testing.T) {
 	tests := []struct {
 		name     string
 		param    interface{}
-		err      bool
+		errs     []error
 		expected string
 	}{
 		{
 			name:     "default",
 			param:    pause.Default,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><break strength="medium"/><break strength="medium"/></speak>`,
 		},
 		{
 			name:     "none",
 			param:    pause.None,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><break strength="none"/><break strength="none"/></speak>`,
 		},
 		{
 			name:     "x-weak",
 			param:    pause.XWeak,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><break strength="x-weak"/><break strength="x-weak"/></speak>`,
 		},
 		{
 			name:     "weak",
 			param:    pause.Weak,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><break strength="weak"/><break strength="weak"/></speak>`,
 		},
 		{
 			name:     "medium",
 			param:    pause.Medium,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><break strength="medium"/><break strength="medium"/></speak>`,
 		},
 		{
 			name:     "strong",
 			param:    pause.Strong,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><break strength="strong"/><break strength="strong"/></speak>`,
 		},
 		{
 			name:     "x-strong",
 			param:    pause.XStrong,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><break strength="x-strong"/><break strength="x-strong"/></speak>`,
 		},
 		{
 			name:     "custom",
 			param:    pause.Strength("custom"),
-			err:      false,
+			errs:     nil,
 			expected: `<speak><break strength="custom"/><break strength="custom"/></speak>`,
 		},
 		{
 			name:     "time",
 			param:    time.Second,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><break time="1000ms"/><break time="1000ms"/></speak>`,
 		},
 		{
-			name:     "invalidType",
-			param:    4,
-			err:      true,
+			name:  "invalidType",
+			param: 4,
+			errs: []error{
+				errors.New("unsupported parameter type: must be either pause.Strength or time.Duration"),
+				errors.New("unsupported parameter type: must be either pause.Strength or time.Duration"),
+			},
 			expected: `<speak></speak>`,
 		},
 	}
@@ -188,17 +211,13 @@ func TestBuilder_AppendBreak(t *testing.T) {
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		err := b.AppendBreak(test.param)
-		if (err != nil) != test.err {
-			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
+		b.AppendBreak(test.param).AppendBreak(test.param)
+
+		actual, errs := b.Build()
+		if len(test.errs) != len(errs) {
+			t.Errorf("%s: error mismatch: expected %v, got %v", test.name, test.errs, errs)
 		}
 
-		err = b.AppendBreak(test.param)
-		if (err != nil) != test.err {
-			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
-		}
-
-		actual := b.Build()
 		if actual != test.expected {
 			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
 		}
@@ -242,10 +261,13 @@ func TestBuilder_AppendEmphasis(t *testing.T) {
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		b.AppendEmphasis(test.level, "text1")
-		b.AppendEmphasis(test.level, "text2")
+		b.AppendEmphasis(test.level, "text1").AppendEmphasis(test.level, "text2")
 
-		actual := b.Build()
+		actual, errs := b.Build()
+		if errs != nil {
+			t.Errorf("%s: error mismatch: expected nil, got %v", test.name, errs)
+		}
+
 		if actual != test.expected {
 			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
 		}
@@ -255,10 +277,13 @@ func TestBuilder_AppendEmphasis(t *testing.T) {
 func TestBuilder_AppendParagraph(t *testing.T) {
 	b, _ := NewBuilder()
 
-	b.AppendParagraph("text1")
-	b.AppendParagraph("text2")
+	b.AppendParagraph("text1").AppendParagraph("text2")
 
-	actual := b.Build()
+	actual, errs := b.Build()
+	if errs != nil {
+		t.Errorf("error mismatch: expected nil, got %v", errs)
+	}
+
 	expected := `<speak><p>text1</p><p>text2</p></speak>`
 	if actual != expected {
 		t.Errorf("expected %s, got %s", expected, actual)
@@ -271,7 +296,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 		rate     interface{}
 		pitch    interface{}
 		volume   interface{}
-		err      bool
+		errs     []error
 		expected string
 	}{
 		{
@@ -279,7 +304,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateXSlow,
 			pitch:    prosody.PitchXLow,
 			volume:   prosody.VolumeSilent,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody rate="x-slow" pitch="x-low" volume="silent">text1</prosody><prosody rate="x-slow" pitch="x-low" volume="silent">text2</prosody></speak>`,
 		},
 		{
@@ -287,7 +312,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateSlow,
 			pitch:    prosody.PitchLow,
 			volume:   prosody.VolumeXSoft,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody rate="slow" pitch="low" volume="x-soft">text1</prosody><prosody rate="slow" pitch="low" volume="x-soft">text2</prosody></speak>`,
 		},
 		{
@@ -295,7 +320,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateMedium,
 			pitch:    prosody.PitchMedium,
 			volume:   prosody.VolumeSoft,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody rate="medium" pitch="medium" volume="soft">text1</prosody><prosody rate="medium" pitch="medium" volume="soft">text2</prosody></speak>`,
 		},
 		{
@@ -303,7 +328,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateFast,
 			pitch:    prosody.PitchHigh,
 			volume:   prosody.VolumeMedium,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody rate="fast" pitch="high" volume="medium">text1</prosody><prosody rate="fast" pitch="high" volume="medium">text2</prosody></speak>`,
 		},
 		{
@@ -311,7 +336,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateXFast,
 			pitch:    prosody.PitchXHigh,
 			volume:   prosody.VolumeLoud,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody rate="x-fast" pitch="x-high" volume="loud">text1</prosody><prosody rate="x-fast" pitch="x-high" volume="loud">text2</prosody></speak>`,
 		},
 		{
@@ -319,7 +344,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateXFast,
 			pitch:    prosody.PitchXHigh,
 			volume:   prosody.VolumeXLoud,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody rate="x-fast" pitch="x-high" volume="x-loud">text1</prosody><prosody rate="x-fast" pitch="x-high" volume="x-loud">text2</prosody></speak>`,
 		},
 		{
@@ -327,7 +352,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.Rate("custom rate"),
 			pitch:    prosody.Pitch("custom pitch"),
 			volume:   prosody.Volume("custom volume"),
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody rate="custom rate" pitch="custom pitch" volume="custom volume">text1</prosody><prosody rate="custom rate" pitch="custom pitch" volume="custom volume">text2</prosody></speak>`,
 		},
 		{
@@ -335,7 +360,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     prosody.RateXSlow,
 			pitch:    nil,
 			volume:   nil,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody rate="x-slow">text1</prosody><prosody rate="x-slow">text2</prosody></speak>`,
 		},
 		{
@@ -343,7 +368,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     nil,
 			pitch:    prosody.PitchXLow,
 			volume:   nil,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody pitch="x-low">text1</prosody><prosody pitch="x-low">text2</prosody></speak>`,
 		},
 		{
@@ -351,7 +376,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     nil,
 			pitch:    nil,
 			volume:   prosody.VolumeSilent,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody volume="silent">text1</prosody><prosody volume="silent">text2</prosody></speak>`,
 		},
 		{
@@ -359,7 +384,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     110,
 			pitch:    nil,
 			volume:   nil,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody rate="110%">text1</prosody><prosody rate="110%">text2</prosody></speak>`,
 		},
 		{
@@ -367,7 +392,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     nil,
 			pitch:    10,
 			volume:   nil,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody pitch="+10%">text1</prosody><prosody pitch="+10%">text2</prosody></speak>`,
 		},
 		{
@@ -375,7 +400,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     nil,
 			pitch:    -10,
 			volume:   nil,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody pitch="-10%">text1</prosody><prosody pitch="-10%">text2</prosody></speak>`,
 		},
 		{
@@ -383,7 +408,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     nil,
 			pitch:    nil,
 			volume:   4,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody volume="+4dB">text1</prosody><prosody volume="+4dB">text2</prosody></speak>`,
 		},
 		{
@@ -391,7 +416,7 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     nil,
 			pitch:    nil,
 			volume:   -4,
-			err:      false,
+			errs:     nil,
 			expected: `<speak><prosody volume="-4dB">text1</prosody><prosody volume="-4dB">text2</prosody></speak>`,
 		},
 		{
@@ -399,31 +424,40 @@ func TestBuilder_AppendProsody(t *testing.T) {
 			rate:     nil,
 			pitch:    nil,
 			volume:   nil,
-			err:      false,
-			expected: `<speak><prosody >text1</prosody><prosody >text2</prosody></speak>`,
+			errs:     nil,
+			expected: `<speak><prosody>text1</prosody><prosody>text2</prosody></speak>`,
 		},
 		{
-			name:     "invalidRateType",
-			rate:     true,
-			pitch:    nil,
-			volume:   nil,
-			err:      true,
+			name:   "invalidRateType",
+			rate:   true,
+			pitch:  nil,
+			volume: nil,
+			errs: []error{
+				errors.New("unsupported rate type: must be either prosody.Rate or int"),
+				errors.New("unsupported rate type: must be either prosody.Rate or int"),
+			},
 			expected: `<speak></speak>`,
 		},
 		{
-			name:     "invalidPitchType",
-			rate:     nil,
-			pitch:    true,
-			volume:   nil,
-			err:      true,
+			name:   "invalidPitchType",
+			rate:   nil,
+			pitch:  true,
+			volume: nil,
+			errs: []error{
+				errors.New("unsupported pitch type: must be either prosody.Pitch or int"),
+				errors.New("unsupported pitch type: must be either prosody.Pitch or int"),
+			},
 			expected: `<speak></speak>`,
 		},
 		{
-			name:     "invalidVolumeType",
-			rate:     nil,
-			pitch:    nil,
-			volume:   true,
-			err:      true,
+			name:   "invalidVolumeType",
+			rate:   nil,
+			pitch:  nil,
+			volume: true,
+			errs: []error{
+				errors.New("unsupported volume type: must be either prosody.Volume or int"),
+				errors.New("unsupported volume type: must be either prosody.Volume or int"),
+			},
 			expected: `<speak></speak>`,
 		},
 	}
@@ -431,17 +465,13 @@ func TestBuilder_AppendProsody(t *testing.T) {
 	for _, test := range tests {
 		b, _ := NewBuilder()
 
-		err := b.AppendProsody(test.rate, test.pitch, test.volume, "text1")
-		if (err != nil) != test.err {
-			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
+		b.AppendProsody(test.rate, test.pitch, test.volume, "text1").AppendProsody(test.rate, test.pitch, test.volume, "text2")
+
+		actual, errs := b.Build()
+		if len(test.errs) != len(errs) {
+			t.Errorf("%s: error mismatch: expected %v, got %v", test.name, test.errs, errs)
 		}
 
-		err = b.AppendProsody(test.rate, test.pitch, test.volume, "text2")
-		if (err != nil) != test.err {
-			t.Errorf("%s: error mismatch: expected %t, got %v", test.name, test.err, err)
-		}
-
-		actual := b.Build()
 		if actual != test.expected {
 			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
 		}
@@ -454,7 +484,11 @@ func TestBuilder_AppendSentence(t *testing.T) {
 	b.AppendSentence("text1")
 	b.AppendSentence("text2")
 
-	actual := b.Build()
+	actual, errs := b.Build()
+	if errs != nil {
+		t.Errorf("error mismatch: expected nil, got %v", errs)
+	}
+
 	expected := `<speak><s>text1</s><s>text2</s></speak>`
 	if actual != expected {
 		t.Errorf("output mismatch: expected %s, got %s", expected, actual)
@@ -467,7 +501,11 @@ func TestBuilder_AppendSubstitution(t *testing.T) {
 	b.AppendSubstitution("alias1", "text1")
 	b.AppendSubstitution("alias2", "text2")
 
-	actual := b.Build()
+	actual, errs := b.Build()
+	if errs != nil {
+		t.Errorf("error mismatch: expected nil, got %v", errs)
+	}
+
 	expected := `<speak><sub alias="alias1">text1</sub><sub alias="alias2">text2</sub></speak>`
 	if actual != expected {
 		t.Errorf("output mismatch: expected %s, got %s", expected, actual)
