@@ -12,14 +12,17 @@ import (
 
 // Helper Types
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 type SSMLTextBuilder struct {
 	buffer *bytes.Buffer
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func NewSSMLTextBuilder() *SSMLTextBuilder {
 	return &SSMLTextBuilder{bytes.NewBufferString("")}
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) AppendPlainSpeech(text string) *SSMLTextBuilder {
 
 	builder.buffer.WriteString(text)
@@ -27,6 +30,7 @@ func (builder *SSMLTextBuilder) AppendPlainSpeech(text string) *SSMLTextBuilder 
 	return builder
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) AppendAmazonEffect(text, name string) *SSMLTextBuilder {
 
 	builder.buffer.WriteString(fmt.Sprintf("<amazon:effect name=\"%s\">%s</amazon:effect>", name, text))
@@ -34,6 +38,7 @@ func (builder *SSMLTextBuilder) AppendAmazonEffect(text, name string) *SSMLTextB
 	return builder
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) AppendAudio(src string) *SSMLTextBuilder {
 
 	builder.buffer.WriteString(fmt.Sprintf("<audio src=\"%s\"/>", src))
@@ -41,6 +46,7 @@ func (builder *SSMLTextBuilder) AppendAudio(src string) *SSMLTextBuilder {
 	return builder
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) AppendBreak(strength, time string) *SSMLTextBuilder {
 
 	if strength == "" {
@@ -53,6 +59,7 @@ func (builder *SSMLTextBuilder) AppendBreak(strength, time string) *SSMLTextBuil
 	return builder
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) AppendEmphasis(text, level string) *SSMLTextBuilder {
 
 	builder.buffer.WriteString(fmt.Sprintf("<emphasis level=\"%s\">%s</emphasis>", level, text))
@@ -60,6 +67,7 @@ func (builder *SSMLTextBuilder) AppendEmphasis(text, level string) *SSMLTextBuil
 	return builder
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) AppendParagraph(text string) *SSMLTextBuilder {
 
 	builder.buffer.WriteString(fmt.Sprintf("<p>%s</p>", text))
@@ -67,6 +75,7 @@ func (builder *SSMLTextBuilder) AppendParagraph(text string) *SSMLTextBuilder {
 	return builder
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) AppendProsody(text, rate, pitch, volume string) *SSMLTextBuilder {
 
 	builder.buffer.WriteString(fmt.Sprintf("<prosody rate=\"%s\" pitch=\"%s\" volume=\"%s\">%s</prosody>", rate, pitch, volume, text))
@@ -74,6 +83,7 @@ func (builder *SSMLTextBuilder) AppendProsody(text, rate, pitch, volume string) 
 	return builder
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) AppendSentence(text string) *SSMLTextBuilder {
 
 	builder.buffer.WriteString(fmt.Sprintf("<s>%s</s>", text))
@@ -81,6 +91,7 @@ func (builder *SSMLTextBuilder) AppendSentence(text string) *SSMLTextBuilder {
 	return builder
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) AppendSubstitution(text, alias string) *SSMLTextBuilder {
 
 	builder.buffer.WriteString(fmt.Sprintf("<sub alias=\"%s\">%s</sub>", alias, text))
@@ -88,6 +99,7 @@ func (builder *SSMLTextBuilder) AppendSubstitution(text, alias string) *SSMLText
 	return builder
 }
 
+// Deprecated: Please use the github.com/mikeflynn/go-alexa/ssml package
 func (builder *SSMLTextBuilder) Build() string {
 	return fmt.Sprintf("<speak>%s</speak>", builder.buffer.String())
 }
