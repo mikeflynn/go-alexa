@@ -1,58 +1,44 @@
 package request
 
 import (
-	"errors"
-	"time"
+	"encoding/json"
+
+	"github.com/pkg/errors"
 )
 
-func (r *Request) TimestampValid() bool {
-	reqTimestamp, _ := time.Parse("2006-01-02T15:04:05Z", r.Body.Timestamp)
-	if time.Since(reqTimestamp) < time.Duration(150)*time.Second {
-		return true
+var jsonUnmarshal = json.Unmarshal // Used to enable unit testing
+
+// BootstrapFromJSON boostraps the Metadata and the specific Request from a JSON payload.
+// It returns a Metadata pointer, a Request pointer, and an error.
+// The error will be non-nil if there are issues unmarshalling the JSON or if the request type is not supported.
+// If the error is non-nil the Metadata and Request pointers will be nil.
+func BootstrapFromJSON(data []byte) (*Metadata, interface{}, error) {
+	var efu envelope
+
+	if err := jsonUnmarshal(data, &efu); err != nil {
+		return nil, nil, errors.Errorf("failed to unmarshal elements common to all request envelopes: %v", err)
 	}
 
-	return false
-}
-
-func (r *Request) ApplicationIDValid(myAppIDs []string) bool {
-	// TODO: Probably a better way to do r
-	for _, str := range myAppIDs {
-		if str == r.Session.Application.ApplicationID {
-			return true
+	switch efu.Request.Type {
+	case "LaunchRequest":
+		var env launchRequestEnvelope
+		if err := jsonUnmarshal(data, &env); err != nil {
+			return nil, nil, errors.Errorf("failed to unmarshal launch request envelope: %v", err)
 		}
+		return &efu.Metadata, &env.Request, nil
+	case "IntentRequest":
+		var env intentRequestEnvelope
+		if err := jsonUnmarshal(data, &env); err != nil {
+			return nil, nil, errors.Errorf("failed to unmarshal intent request envelope: %v", err)
+		}
+		return &efu.Metadata, &env.Request, nil
+	case "SessionEndedRequest":
+		var env sessionEndedRequestEnvelope
+		if err := jsonUnmarshal(data, &env); err != nil {
+			return nil, nil, errors.Errorf("failed to unmarshal session ended request envelope: %v", err)
+		}
+		return &efu.Metadata, &env.Request, nil
+	default:
+		return nil, nil, errors.Errorf("request type %s not supported", efu.Request.Type)
 	}
-	return false
-}
-
-func (r *Request) GetSessionID() string {
-	return r.Session.SessionID
-}
-
-func (r *Request) GetUserID() string {
-	return r.Session.User.UserID
-}
-
-func (r *Request) GetRequestType() string {
-	return r.Body.Type
-}
-
-func (r *Request) GetIntentName() string {
-	if r.GetRequestType() == "IntentRequest" {
-		return r.Body.Intent.Name
-	}
-
-	return r.GetRequestType()
-}
-
-func (r *Request) GetSlotValue(slotName string) (string, error) {
-	slot, ok := r.Body.Intent.Slots[slotName]
-	if !ok {
-		return "", errors.New("Slot name not found.")
-	}
-
-	return slot.Value, nil
-}
-
-func (r *Request) AllSlots() map[string]Slot {
-	return r.Body.Intent.Slots
 }

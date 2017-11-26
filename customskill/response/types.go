@@ -1,32 +1,38 @@
 package response
 
-type Response struct {
+type Envelope struct {
 	Version           string                 `json:"version"`
 	SessionAttributes map[string]interface{} `json:"sessionAttributes,omitempty"`
-	Body              Body                   `json:"response"`
+	Response          Response               `json:"response"`
 }
 
-type Body struct {
-	OutputSpeech     *Payload  `json:"outputSpeech,omitempty"`
-	Card             *Payload  `json:"card,omitempty"`
-	Reprompt         *Reprompt `json:"reprompt,omitempty"` // Pointer so it's dropped if empty in JSON response.
-	ShouldEndSession bool      `json:"shouldEndSession"`
+type Response struct {
+	OutputSpeech     *OutputSpeech `json:"outputSpeech,omitempty"`
+	Reprompt         *Reprompt     `json:"reprompt,omitempty"`
+	Card             *Card         `json:"card,omitempty"`
+	Directives       []interface{} `json:"directives,omitempty"`
+	ShouldEndSession bool          `json:"shouldEndSession"`
+}
+
+type OutputSpeech struct {
+	Type string `json:"type"`
+	Text string `json:"text,omitempty"`
+	SSML string `json:"ssml,omitempty"`
 }
 
 type Reprompt struct {
-	OutputSpeech Payload `json:"outputSpeech,omitempty"`
+	OutputSpeech *OutputSpeech `json:"outputSpeech,omitempty"`
+}
+
+type Card struct {
+	Type    string `json:"type"`
+	Title   string `json:"title,omitempty"`
+	Content string `json:"content,omitempty"`
+	Text    string `json:"text,omitempty"`
+	Image   *Image `json:"image,omitempty"`
 }
 
 type Image struct {
 	SmallImageURL string `json:"smallImageUrl,omitempty"`
 	LargeImageURL string `json:"largeImageUrl,omitempty"`
-}
-
-type Payload struct {
-	Type    string `json:"type,omitempty"`
-	Title   string `json:"title,omitempty"`
-	Text    string `json:"text,omitempty"`
-	SSML    string `json:"ssml,omitempty"`
-	Content string `json:"content,omitempty"`
-	Image   Image  `json:"image,omitempty"`
 }

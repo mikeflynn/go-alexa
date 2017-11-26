@@ -1,110 +1,114 @@
 package response
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
-func NewResponse() *Response {
-	er := &Response{
+var jsonMarshal = json.Marshal // Used to enable unit testing
+
+func New() *Envelope {
+	e := &Envelope{
 		Version: "1.0",
-		Body: Body{
+		Response: Response{
 			ShouldEndSession: true,
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
 
-	return er
+	return e
 }
 
-func (r *Response) OutputSpeech(text string) *Response {
-	r.Body.OutputSpeech = &Payload{
+func (e *Envelope) SetOutputSpeech(text string) *Envelope {
+	e.Response.OutputSpeech = &OutputSpeech{
 		Type: "PlainText",
 		Text: text,
 	}
 
-	return r
+	return e
 }
 
-func (r *Response) Card(title string, content string) *Response {
-	return r.SimpleCard(title, content)
-}
-
-func (r *Response) OutputSpeechSSML(text string) *Response {
-	r.Body.OutputSpeech = &Payload{
+func (e *Envelope) SetOutputSpeechSSML(text string) *Envelope {
+	e.Response.OutputSpeech = &OutputSpeech{
 		Type: "SSML",
 		SSML: text,
 	}
 
-	return r
+	return e
 }
 
-func (r *Response) SimpleCard(title string, content string) *Response {
-	r.Body.Card = &Payload{
-		Type:    "Simple",
-		Title:   title,
-		Content: content,
-	}
-
-	return r
-}
-
-func (r *Response) StandardCard(title string, content string, smallImg string, largeImg string) *Response {
-	r.Body.Card = &Payload{
-		Type:    "Standard",
-		Title:   title,
-		Content: content,
-	}
-
-	if smallImg != "" {
-		r.Body.Card.Image.SmallImageURL = smallImg
-	}
-
-	if largeImg != "" {
-		r.Body.Card.Image.LargeImageURL = largeImg
-	}
-
-	return r
-}
-
-func (r *Response) LinkAccountCard() *Response {
-	r.Body.Card = &Payload{
-		Type: "LinkAccount",
-	}
-
-	return r
-}
-
-func (r *Response) Reprompt(text string) *Response {
-	r.Body.Reprompt = &Reprompt{
-		OutputSpeech: Payload{
+func (e *Envelope) SetReprompt(text string) *Envelope {
+	e.Response.Reprompt = &Reprompt{
+		OutputSpeech: &OutputSpeech{
 			Type: "PlainText",
 			Text: text,
 		},
 	}
 
-	return r
+	return e
 }
 
-func (r *Response) RepromptSSML(text string) *Response {
-	r.Body.Reprompt = &Reprompt{
-		OutputSpeech: Payload{
+func (e *Envelope) SetRepromptSSML(text string) *Envelope {
+	e.Response.Reprompt = &Reprompt{
+		OutputSpeech: &OutputSpeech{
 			Type: "SSML",
-			Text: text,
+			SSML: text,
 		},
 	}
 
-	return r
+	return e
 }
 
-func (r *Response) EndSession(flag bool) *Response {
-	r.Body.ShouldEndSession = flag
-
-	return r
+func (e *Envelope) SetCard(title string, content string) *Envelope {
+	return e.SetSimpleCard(title, content)
 }
 
-func (r *Response) String() ([]byte, error) {
-	jsonStr, err := json.Marshal(r)
-	if err != nil {
-		return nil, err
+func (e *Envelope) SetSimpleCard(title string, content string) *Envelope {
+	e.Response.Card = &Card{
+		Type:    "Simple",
+		Title:   title,
+		Content: content,
 	}
 
-	return jsonStr, nil
+	return e
+}
+
+func (e *Envelope) SetStandardCard(title string, content string, smallImg string, largeImg string) *Envelope {
+	e.Response.Card = &Card{
+		Type:    "Standard",
+		Title:   title,
+		Content: content,
+	}
+
+	if (smallImg != "") || (largeImg != "") {
+		e.Response.Card.Image = &Image{
+			SmallImageURL: smallImg,
+			LargeImageURL: largeImg,
+		}
+	}
+
+	return e
+}
+
+func (e *Envelope) SetLinkAccountCard() *Envelope {
+	e.Response.Card = &Card{
+		Type: "LinkAccount",
+	}
+
+	return e
+}
+
+func (e *Envelope) SetEndSession(flag bool) *Envelope {
+	e.Response.ShouldEndSession = flag
+
+	return e
+}
+
+func (e *Envelope) String() string {
+	b, err := jsonMarshal(e)
+	if err != nil {
+		return fmt.Sprintf("failed to marshal JSON: %v", err)
+	}
+
+	return string(b)
 }
