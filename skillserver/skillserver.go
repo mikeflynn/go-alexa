@@ -21,6 +21,8 @@ import (
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
+	"github.com/bluele/gcache"
+	"fmt"
 )
 
 type EchoApplication struct {
@@ -167,6 +169,8 @@ func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 	next(w, r)
 }
 
+var certCache = gcache.New(5).LRU().Build()
+
 // IsValidAlexaRequest handles all the necessary steps to validate that an incoming http.Request has actually come from
 // the Alexa service. If an error occurs during the validation process, an http.Error will be written to the provided http.ResponseWriter.
 // The required steps for request validation can be found on this page:
@@ -180,30 +184,75 @@ func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
+	var cert *x509.Certificate
+	var certErr *certError
+
+	certVal, err := certCache.Get(certURL)
+	if err == nil {
+		cert = certVal.(*x509.Certificate)
+
+		if isCertExpired(cert, time.Now()) {
+			cert = nil
+		}
+	}
+
+	if cert == nil {
+		if cert, certErr = loadCert(certURL); certErr == nil {
+			certCache.SetWithExpire(certURL, cert, cert.NotAfter.Sub(time.Now()))
+		} else {
+			HTTPError(w, certErr.logMsg, certErr.err, certErr.errCode)
+			return false
+		}
+	}
+
+	certErr = verifySig(r, cert)
+	if certErr != nil {
+		HTTPError(w, certErr.logMsg, certErr.err, certErr.errCode)
+		return false
+	} else {
+		return true
+	}
+}
+
+func isCertExpired(cert *x509.Certificate, now time.Time) bool {
+	return cert.NotBefore.After(now) || cert.NotAfter.Before(now)
+}
+
+type certError struct {
+	logMsg  string
+	err     string
+	errCode int
+}
+
+func (e *certError) Error() string {
+	return e.logMsg
+}
+
+func loadCert(certURL string) (*x509.Certificate, *certError) {
 	// Fetch certificate data
 	certContents, err := readCert(certURL)
 	if err != nil {
-		HTTPError(w, err.Error(), "Not Authorized", 401)
-		return false
+		return nil, &certError{err.Error(), "Not Authorized", 401}
 	}
 
 	// Decode certificate data
 	block, _ := pem.Decode(certContents)
 	if block == nil {
-		HTTPError(w, "Failed to parse certificate PEM.", "Not Authorized", 401)
-		return false
+		return nil, &certError{"Failed to parse certificate PEM.", "Not Authorized", 401}
 	}
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		HTTPError(w, err.Error(), "Not Authorized", 401)
-		return false
+		return nil, &certError{err.Error(), "Not Authorized", 401}
 	}
 
 	// Check the certificate date
-	if time.Now().Unix() < cert.NotBefore.Unix() || time.Now().Unix() > cert.NotAfter.Unix() {
-		HTTPError(w, "Amazon certificate expired.", "Not Authorized", 401)
-		return false
+	if isCertExpired(cert, time.Now()) {
+		return nil, &certError{
+			logMsg:  fmt.Sprintf("Amazon certificate expired. nb=%s na=%s", cert.NotBefore, cert.NotAfter),
+			err:     "Not Authorized",
+			errCode: 401,
+		}
 	}
 
 	// Check the certificate alternate names
@@ -215,10 +264,13 @@ func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	if !foundName {
-		HTTPError(w, "Amazon certificate invalid.", "Not Authorized", 401)
-		return false
+		return nil, &certError{"Amazon certificate invalid.", "Not Authorized", 401}
 	}
 
+	return cert, nil
+}
+
+func verifySig(r *http.Request, cert *x509.Certificate) *certError {
 	// Verify the key
 	publicKey := cert.PublicKey
 	encryptedSig, _ := base64.StdEncoding.DecodeString(r.Header.Get("Signature"))
@@ -226,21 +278,19 @@ func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
 	// Make the request body SHA1 and verify the request with the public key
 	var bodyBuf bytes.Buffer
 	hash := sha1.New()
-	_, err = io.Copy(hash, io.TeeReader(r.Body, &bodyBuf))
+	_, err := io.Copy(hash, io.TeeReader(r.Body, &bodyBuf))
 	if err != nil {
-		HTTPError(w, err.Error(), "Internal Error", 500)
-		return false
+		return &certError{err.Error(), "Internal Error", 500}
 	}
 	//log.Println(bodyBuf.String())
 	r.Body = ioutil.NopCloser(&bodyBuf)
 
 	err = rsa.VerifyPKCS1v15(publicKey.(*rsa.PublicKey), crypto.SHA1, hash.Sum(nil), encryptedSig)
 	if err != nil {
-		HTTPError(w, "Signature match failed.", "Not Authorized", 401)
-		return false
+		return &certError{"Signature match failed.", "Not Authorized", 401}
 	}
 
-	return true
+	return nil
 }
 
 func readCert(certURL string) ([]byte, error) {
