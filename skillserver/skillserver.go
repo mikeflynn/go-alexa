@@ -24,11 +24,12 @@ import (
 )
 
 type EchoApplication struct {
-	AppID          string
-	Handler        func(http.ResponseWriter, *http.Request)
-	OnLaunch       func(*EchoRequest, *EchoResponse)
-	OnIntent       func(*EchoRequest, *EchoResponse)
-	OnSessionEnded func(*EchoRequest, *EchoResponse)
+	AppID              string
+	Handler            func(http.ResponseWriter, *http.Request)
+	OnLaunch           func(*EchoRequest, *EchoResponse)
+	OnIntent           func(*EchoRequest, *EchoResponse)
+	OnSessionEnded     func(*EchoRequest, *EchoResponse)
+	OnAudioPlayerState func(*EchoRequest, *EchoResponse)
 }
 
 type StdApplication struct {
@@ -81,6 +82,10 @@ func Init(apps map[string]interface{}, router *mux.Router) {
 				} else if echoReq.GetRequestType() == "SessionEndedRequest" {
 					if app.OnSessionEnded != nil {
 						app.OnSessionEnded(echoReq, echoResp)
+					}
+				} else if strings.HasPrefix(echoReq.GetRequestType(), "AudioPlayer.") {
+					if app.OnAudioPlayerState != nil {
+						app.OnAudioPlayerState(echoReq, echoResp)
 					}
 				} else {
 					http.Error(w, "Invalid request.", http.StatusBadRequest)
