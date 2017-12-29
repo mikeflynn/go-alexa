@@ -3,14 +3,16 @@ package customskill
 import (
 	"encoding/json"
 	"io"
-	"reflect"
 
 	"github.com/mikeflynn/go-alexa/customskill/request"
 	"github.com/mikeflynn/go-alexa/customskill/response"
 	"github.com/pkg/errors"
 )
 
-var jsonMarshal = json.Marshal
+var (
+	requestBootstrapFromJSON = request.BootstrapFromJSON
+	jsonMarshal              = json.Marshal
+)
 
 // Handle parses a JSON payload, calls the appropriate request handler, serializes the response, and writes it to the provided writer.
 func (s *Skill) Handle(w io.Writer, b []byte) error {
@@ -20,7 +22,7 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 		err  error
 	)
 
-	m, e, err := request.BootstrapFromJSON(b)
+	m, e, err := requestBootstrapFromJSON(b)
 	if err != nil {
 		return errors.Errorf("failed to bootstrap request from JSON payload: %v", err)
 	}
@@ -29,8 +31,8 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 		return errors.Errorf("application ID %s is not in the list of valid application IDs: %v", m.Session.Application.ApplicationID, s.ValidApplicationIDs)
 	}
 
-	switch reflect.TypeOf(e) {
-	case reflect.TypeOf(&request.LaunchRequest{}):
+	switch e.(type) {
+	case *request.LaunchRequest:
 		if s.OnLaunch == nil {
 			return errors.Errorf("no OnLaunch handler defined")
 		}
@@ -39,7 +41,7 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 		if err != nil {
 			return errors.Errorf("OnLaunch handler failed: %v", err)
 		}
-	case reflect.TypeOf(&request.IntentRequest{}):
+	case *request.IntentRequest:
 		if s.OnIntent == nil {
 			return errors.Errorf("no OnIntent handler defined")
 		}
@@ -48,7 +50,7 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 		if err != nil {
 			return errors.Errorf("OnIntent handler failed: %v", err)
 		}
-	case reflect.TypeOf(&request.SessionEndedRequest{}):
+	case *request.SessionEndedRequest:
 		if s.OnSessionEnded == nil {
 			return errors.Errorf("no OnSessionEnded handler defined")
 		}
@@ -58,6 +60,8 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 		}
 		// A skill cannot return a response to SessionEndedRequest.
 		return nil
+	default:
+		return errors.Errorf("unsupported request type: %T", e)
 	}
 
 	jsonB, err := jsonMarshal(response.NewEnvelope(resp, sess))

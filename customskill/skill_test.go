@@ -16,13 +16,14 @@ import (
 func TestSkill_Handle(t *testing.T) {
 
 	var tests = []struct {
-		name                string
-		skill               *Skill
-		w                   io.ReadWriter
-		b                   string
-		jsonMarshal         func(v interface{}) ([]byte, error)
-		partialErrorMessage *string
-		written             string
+		name                     string
+		skill                    *Skill
+		w                        io.ReadWriter
+		b                        string
+		jsonMarshal              func(v interface{}) ([]byte, error)
+		requestBootstrapFromJSON func(data []byte) (*request.Metadata, interface{}, error)
+		partialErrorMessage      *string
+		written                  string
 	}{
 		{
 			name: "happy-path-launch-request",
@@ -122,6 +123,22 @@ func TestSkill_Handle(t *testing.T) {
 			name:                "invalid-request-returns-error",
 			b:                   "",
 			partialErrorMessage: strPointer("failed to bootstrap request from JSON payload"),
+		},
+		{
+			name: "unsupported-request-type-returns-error",
+			skill: &Skill{
+				ValidApplicationIDs: []string{"testApplicationId"},
+			},
+			requestBootstrapFromJSON: func(data []byte) (*request.Metadata, interface{}, error) {
+				return &request.Metadata{
+					Session: request.Session{
+						Application: request.Application{
+							ApplicationID: "testApplicationId",
+						},
+					},
+				}, nil, nil
+			},
+			partialErrorMessage: strPointer("unsupported request type: <nil>"),
 		},
 		{
 			name:  "invalid-application-id-returns-error",
@@ -331,7 +348,10 @@ func TestSkill_Handle(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		jsonMarshal = json.Marshal
+		// Override mocked functions
+		if test.requestBootstrapFromJSON != nil {
+			requestBootstrapFromJSON = test.requestBootstrapFromJSON
+		}
 		if test.jsonMarshal != nil {
 			jsonMarshal = test.jsonMarshal
 		}
@@ -340,6 +360,10 @@ func TestSkill_Handle(t *testing.T) {
 			t.Errorf("%s: error mismatch:\n\tgot:    %v\n\twanted: it to contain '%s'", test.name, err, pointerStr(test.partialErrorMessage))
 			continue
 		}
+
+		// Restore mocked functions
+		requestBootstrapFromJSON = request.BootstrapFromJSON
+		jsonMarshal = json.Marshal
 
 		if test.partialErrorMessage != nil {
 			continue
@@ -355,8 +379,6 @@ func TestSkill_Handle(t *testing.T) {
 
 		}
 
-		// Restore mocked functions
-		jsonMarshal = json.Marshal
 	}
 	/*
 	   	s := Skill{
