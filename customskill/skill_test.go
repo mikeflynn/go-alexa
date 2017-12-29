@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TODO: Need to test session attributes
 func TestSkill_Handle(t *testing.T) {
 
 	var tests = []struct {
@@ -28,8 +29,8 @@ func TestSkill_Handle(t *testing.T) {
 			name: "happy-path-launch-request",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Envelope, error) {
-					return response.New(), nil
+				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+					return response.New(), nil, nil
 				},
 			},
 			b: `
@@ -50,8 +51,8 @@ func TestSkill_Handle(t *testing.T) {
 			name: "happy-path-intent-request",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnIntent: func(intentRequest *request.IntentRequest, session *request.Session) (*response.Envelope, error) {
-					return response.New(), nil
+				OnIntent: func(intentRequest *request.IntentRequest, session *request.Session) (*response.Response, map[string]interface{}, error) {
+					return response.New(), nil, nil
 				},
 			},
 			b: `
@@ -133,8 +134,8 @@ func TestSkill_Handle(t *testing.T) {
 			name: "on-launch-request-handler-error-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Envelope, error) {
-					return nil, errors.New("dummy error")
+				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+					return nil, nil, errors.New("dummy error")
 				},
 			},
 			b: `
@@ -172,8 +173,8 @@ func TestSkill_Handle(t *testing.T) {
 			name: "on-intent-request-handler-error-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnIntent: func(intentRequest *request.IntentRequest, session *request.Session) (*response.Envelope, error) {
-					return nil, errors.New("dummy error")
+				OnIntent: func(intentRequest *request.IntentRequest, session *request.Session) (*response.Response, map[string]interface{}, error) {
+					return nil, nil, errors.New("dummy error")
 				},
 			},
 			b: `
@@ -232,8 +233,8 @@ func TestSkill_Handle(t *testing.T) {
 			name: "responses-which-cannot-be-marshalled-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Envelope, error) {
-					return nil, nil
+				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+					return nil, nil, nil
 				},
 			},
 			b: `
@@ -256,8 +257,8 @@ func TestSkill_Handle(t *testing.T) {
 			name: "writer-which-cannot-be-written-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Envelope, error) {
-					return nil, nil
+				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+					return nil, nil, nil
 				},
 			},
 			b: `
@@ -280,8 +281,8 @@ func TestSkill_Handle(t *testing.T) {
 			name: "writer-which-partially-writes-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Envelope, error) {
-					return nil, nil
+				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+					return nil, nil, nil
 				},
 			},
 			b: `
@@ -298,7 +299,7 @@ func TestSkill_Handle(t *testing.T) {
 			w: &badReadWriter{
 				n: 0,
 			},
-			partialErrorMessage: strPointer("failed to completely write response: 0 of 4 bytes written"),
+			partialErrorMessage: strPointer("failed to completely write response: 0 of 33 bytes written"),
 		},
 	}
 
@@ -309,7 +310,7 @@ func TestSkill_Handle(t *testing.T) {
 		}
 		err := test.skill.Handle(test.w, []byte(test.b))
 		if !errorContains(err, test.partialErrorMessage) {
-			t.Errorf("%s: error mismatch:\n\tgot:    %v\n\texpected: it to contain %s", test.name, err, pointerStr(test.partialErrorMessage))
+			t.Errorf("%s: error mismatch:\n\tgot:    %v\n\twanted: it to contain '%s'", test.name, err, pointerStr(test.partialErrorMessage))
 			continue
 		}
 
@@ -326,6 +327,9 @@ func TestSkill_Handle(t *testing.T) {
 			t.Errorf("%s: write mismatch:\n\tgot:    %v\n\texpected:%s", test.name, string(b), test.written)
 
 		}
+
+		// Restore mocked functions
+		jsonMarshal = json.Marshal
 	}
 	/*
 	   	s := Skill{

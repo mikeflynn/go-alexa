@@ -1,118 +1,105 @@
 package response
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
-var jsonMarshal = json.Marshal // Used to enable unit testing
-
-func New() *Envelope {
-	e := &Envelope{
-		Version: "1.0",
-		Response: Response{
-			ShouldEndSession: Bool(true),
-		},
-		SessionAttributes: make(map[string]interface{}),
+func New() *Response {
+	return &Response{
+		ShouldEndSession: Bool(true),
 	}
-
-	return e
 }
 
-func (e *Envelope) SetOutputSpeech(text string) *Envelope {
-	e.Response.OutputSpeech = &OutputSpeech{
+func (r *Response) SetOutputSpeech(text string) *Response {
+	r.OutputSpeech = &OutputSpeech{
 		Type: "PlainText",
 		Text: text,
 	}
 
-	return e
+	return r
 }
 
-func (e *Envelope) SetOutputSpeechSSML(text string) *Envelope {
-	e.Response.OutputSpeech = &OutputSpeech{
+func (r *Response) SetOutputSpeechSSML(text string) *Response {
+	r.OutputSpeech = &OutputSpeech{
 		Type: "SSML",
 		SSML: text,
 	}
 
-	return e
+	return r
 }
 
-func (e *Envelope) SetReprompt(text string) *Envelope {
-	e.Response.Reprompt = &Reprompt{
+func (r *Response) SetReprompt(text string) *Response {
+	r.Reprompt = &Reprompt{
 		OutputSpeech: &OutputSpeech{
 			Type: "PlainText",
 			Text: text,
 		},
 	}
 
-	return e
+	return r
 }
 
-func (e *Envelope) SetRepromptSSML(text string) *Envelope {
-	e.Response.Reprompt = &Reprompt{
+func (r *Response) SetRepromptSSML(text string) *Response {
+	r.Reprompt = &Reprompt{
 		OutputSpeech: &OutputSpeech{
 			Type: "SSML",
 			SSML: text,
 		},
 	}
 
-	return e
+	return r
 }
 
-func (e *Envelope) SetCard(title, content string) *Envelope {
-	return e.SetSimpleCard(title, content)
+func (r *Response) SetCard(title, content string) *Response {
+	return r.SetSimpleCard(title, content)
 }
 
-func (e *Envelope) SetSimpleCard(title, content string) *Envelope {
-	e.Response.Card = &Card{
+func (r *Response) SetSimpleCard(title, content string) *Response {
+	r.Card = &Card{
 		Type:    "Simple",
 		Title:   title,
 		Content: content,
 	}
 
-	return e
+	return r
 }
 
-func (e *Envelope) SetStandardCard(title, content, smallImg, largeImg string) *Envelope {
-	e.Response.Card = &Card{
+func (r *Response) SetStandardCard(title, content, smallImg, largeImg string) *Response {
+	r.Card = &Card{
 		Type:    "Standard",
 		Title:   title,
 		Content: content,
 	}
 
 	if (smallImg != "") || (largeImg != "") {
-		e.Response.Card.Image = &Image{
+		r.Card.Image = &Image{
 			SmallImageURL: smallImg,
 			LargeImageURL: largeImg,
 		}
 	}
 
-	return e
+	return r
 }
 
-func (e *Envelope) SetLinkAccountCard() *Envelope {
-	e.Response.Card = &Card{
+func (r *Response) SetLinkAccountCard() *Response {
+	r.Card = &Card{
 		Type: "LinkAccount",
 	}
 
-	return e
+	return r
 }
 
-func (e *Envelope) SetEndSession(flag *bool) *Envelope {
-	e.Response.ShouldEndSession = flag
+func (r *Response) SetEndSession(flag *bool) *Response {
+	r.ShouldEndSession = flag
 
-	return e
+	return r
 }
 
-func (e *Envelope) String() string {
-	b, err := jsonMarshal(e)
+func (r *Response) String() string {
+	b, err := jsonMarshal(r)
 	if err != nil {
 		return fmt.Sprintf("failed to marshal JSON: %v", err)
 	}
 
 	return string(b)
-}
-
-func Bool(bool bool) *bool {
-	return &bool
 }

@@ -15,7 +15,8 @@ var jsonMarshal = json.Marshal
 // Handle parses a JSON payload, calls the appropriate request handler, serializes the response, and writes it to the provided writer.
 func (s *Skill) Handle(w io.Writer, b []byte) error {
 	var (
-		resp *response.Envelope
+		resp *response.Response
+		sess map[string]interface{}
 		err  error
 	)
 
@@ -34,7 +35,7 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 			return errors.Errorf("no OnLaunch handler defined")
 		}
 		lr := e.(*request.LaunchRequest)
-		resp, err = s.OnLaunch(lr)
+		resp, sess, err = s.OnLaunch(lr)
 		if err != nil {
 			return errors.Errorf("OnLaunch handler failed: %v", err)
 		}
@@ -43,7 +44,7 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 			return errors.Errorf("no OnIntent handler defined")
 		}
 		ir := e.(*request.IntentRequest)
-		resp, err = s.OnIntent(ir, &m.Session)
+		resp, sess, err = s.OnIntent(ir, &m.Session)
 		if err != nil {
 			return errors.Errorf("OnIntent handler failed: %v", err)
 		}
@@ -59,7 +60,7 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 		return nil
 	}
 
-	jsonB, err := jsonMarshal(resp)
+	jsonB, err := jsonMarshal(response.NewEnvelope(resp, sess))
 	if err != nil {
 		return errors.Errorf("failed to marshal response: %v", err)
 	}

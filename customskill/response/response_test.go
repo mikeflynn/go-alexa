@@ -9,14 +9,48 @@ import (
 	"github.com/pkg/errors"
 )
 
+/* Envelope Tests */
+func TestNewEnvelope(t *testing.T) {
+	got := NewEnvelope(nil, nil)
+	want := &envelope{
+		Version:           "1.0",
+		Response:          nil,
+		SessionAttributes: nil,
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
+	}
+}
+
+func TestEnvelope_String_Success(t *testing.T) {
+	got := NewEnvelope(nil, nil).String()
+	want := `{"version":"1.0","response":null}`
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
+	}
+}
+
+func TestEnvelope_String_Failure(t *testing.T) {
+	jsonMarshal = func(v interface{}) ([]byte, error) {
+		return nil, errors.New("dummy error")
+	}
+	got := NewEnvelope(nil, nil).String()
+	want := "failed to marshal JSON: dummy error"
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
+	}
+	// Restore the mocked jsonMarshal
+	jsonMarshal = json.Marshal
+}
+
+/* Response Tests */
 func TestNew(t *testing.T) {
 	got := New()
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
-			ShouldEndSession: Bool(true),
-		},
-		SessionAttributes: make(map[string]interface{}),
+	want := &Response{
+		ShouldEndSession: Bool(true),
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -24,18 +58,46 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestEnvelope_SetOutputSpeech(t *testing.T) {
+func TestResponse_SetOutputSpeech(t *testing.T) {
 	got := New().SetOutputSpeech("TestOutputSpeech")
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
+	want := &Response{
+		OutputSpeech: &OutputSpeech{
+			Type: "PlainText",
+			Text: "TestOutputSpeech",
+		},
+		ShouldEndSession: Bool(true),
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
+	}
+}
+
+func TestResponse_SetOutputSpeechSSML(t *testing.T) {
+	got := New().SetOutputSpeechSSML("TestOutputSpeechSSML")
+	want := &Response{
+		OutputSpeech: &OutputSpeech{
+			Type: "SSML",
+			SSML: "TestOutputSpeechSSML",
+		},
+		ShouldEndSession: Bool(true),
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
+	}
+}
+
+func TestResponse_SetReprompt(t *testing.T) {
+	got := New().SetReprompt("TestReprompt")
+	want := &Response{
+		Reprompt: &Reprompt{
 			OutputSpeech: &OutputSpeech{
 				Type: "PlainText",
-				Text: "TestOutputSpeech",
+				Text: "TestReprompt",
 			},
-			ShouldEndSession: Bool(true),
 		},
-		SessionAttributes: make(map[string]interface{}),
+		ShouldEndSession: Bool(true),
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -43,18 +105,16 @@ func TestEnvelope_SetOutputSpeech(t *testing.T) {
 	}
 }
 
-func TestEnvelope_SetOutputSpeechSSML(t *testing.T) {
-	got := New().SetOutputSpeechSSML("TestOutputSpeechSSML")
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
+func TestResponse_SetRepromptSSML(t *testing.T) {
+	got := New().SetRepromptSSML("TestRepromptSSML")
+	want := &Response{
+		Reprompt: &Reprompt{
 			OutputSpeech: &OutputSpeech{
 				Type: "SSML",
-				SSML: "TestOutputSpeechSSML",
+				SSML: "TestRepromptSSML",
 			},
-			ShouldEndSession: Bool(true),
 		},
-		SessionAttributes: make(map[string]interface{}),
+		ShouldEndSession: Bool(true),
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -62,61 +122,15 @@ func TestEnvelope_SetOutputSpeechSSML(t *testing.T) {
 	}
 }
 
-func TestEnvelope_SetReprompt(t *testing.T) {
-	got := New().SetReprompt("TestReprompt")
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
-			Reprompt: &Reprompt{
-				OutputSpeech: &OutputSpeech{
-					Type: "PlainText",
-					Text: "TestReprompt",
-				},
-			},
-			ShouldEndSession: Bool(true),
-		},
-		SessionAttributes: make(map[string]interface{}),
-	}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
-	}
-}
-
-func TestEnvelope_SetRepromptSSML(t *testing.T) {
-	got := New().SetRepromptSSML("TestRepromptSSML")
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
-			Reprompt: &Reprompt{
-				OutputSpeech: &OutputSpeech{
-					Type: "SSML",
-					SSML: "TestRepromptSSML",
-				},
-			},
-			ShouldEndSession: Bool(true),
-		},
-		SessionAttributes: make(map[string]interface{}),
-	}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
-	}
-}
-
-func TestEnvelope_SetCard(t *testing.T) {
+func TestResponse_SetCard(t *testing.T) {
 	got := New().SetCard("TestTitle", "TestContent")
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
-			Card: &Card{
-				Type:    "Simple",
-				Title:   "TestTitle",
-				Content: "TestContent",
-			},
-			ShouldEndSession: Bool(true),
+	want := &Response{
+		Card: &Card{
+			Type:    "Simple",
+			Title:   "TestTitle",
+			Content: "TestContent",
 		},
-		SessionAttributes: make(map[string]interface{}),
+		ShouldEndSession: Bool(true),
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -124,19 +138,15 @@ func TestEnvelope_SetCard(t *testing.T) {
 	}
 }
 
-func TestEnvelope_SetSimpleCard(t *testing.T) {
+func TestResponse_SetSimpleCard(t *testing.T) {
 	got := New().SetSimpleCard("TestTitle", "TestContent")
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
-			Card: &Card{
-				Type:    "Simple",
-				Title:   "TestTitle",
-				Content: "TestContent",
-			},
-			ShouldEndSession: Bool(true),
+	want := &Response{
+		Card: &Card{
+			Type:    "Simple",
+			Title:   "TestTitle",
+			Content: "TestContent",
 		},
-		SessionAttributes: make(map[string]interface{}),
+		ShouldEndSession: Bool(true),
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -144,23 +154,19 @@ func TestEnvelope_SetSimpleCard(t *testing.T) {
 	}
 }
 
-func TestEnvelope_SetStandardCard(t *testing.T) {
+func TestResponse_SetStandardCard(t *testing.T) {
 	got := New().SetStandardCard("TestTitle", "TestContent", "TestSmallImageURL", "TestLargeImageURL")
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
-			Card: &Card{
-				Type:    "Standard",
-				Title:   "TestTitle",
-				Content: "TestContent",
-				Image: &Image{
-					SmallImageURL: "TestSmallImageURL",
-					LargeImageURL: "TestLargeImageURL",
-				},
+	want := &Response{
+		Card: &Card{
+			Type:    "Standard",
+			Title:   "TestTitle",
+			Content: "TestContent",
+			Image: &Image{
+				SmallImageURL: "TestSmallImageURL",
+				LargeImageURL: "TestLargeImageURL",
 			},
-			ShouldEndSession: Bool(true),
 		},
-		SessionAttributes: make(map[string]interface{}),
+		ShouldEndSession: Bool(true),
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -168,17 +174,13 @@ func TestEnvelope_SetStandardCard(t *testing.T) {
 	}
 }
 
-func TestEnvelope_SetLinkAccountCard(t *testing.T) {
+func TestResponse_SetLinkAccountCard(t *testing.T) {
 	got := New().SetLinkAccountCard()
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
-			Card: &Card{
-				Type: "LinkAccount",
-			},
-			ShouldEndSession: Bool(true),
+	want := &Response{
+		Card: &Card{
+			Type: "LinkAccount",
 		},
-		SessionAttributes: make(map[string]interface{}),
+		ShouldEndSession: Bool(true),
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -186,25 +188,21 @@ func TestEnvelope_SetLinkAccountCard(t *testing.T) {
 	}
 }
 
-func TestEnvelope_SetEndSession(t *testing.T) {
+func TestResponse_SetEndSession(t *testing.T) {
 	var tests = []struct {
 		name     string
 		input    *bool
-		expected *Envelope
-		validate func(e *Envelope, T *testing.T)
+		expected *Response
+		validate func(r *Response, t *testing.T)
 	}{
 		{
 			name:  "nil-input",
 			input: nil,
-			expected: &Envelope{
-				Version: "1.0",
-				Response: Response{
-					ShouldEndSession: nil,
-				},
-				SessionAttributes: make(map[string]interface{}),
+			expected: &Response{
+				ShouldEndSession: nil,
 			},
-			validate: func(e *Envelope, t *testing.T) {
-				b, err := json.Marshal(e)
+			validate: func(r *Response, t *testing.T) {
+				b, err := json.Marshal(r)
 				if err != nil {
 					t.Errorf("unexpected error: %v", err)
 				}
@@ -216,15 +214,11 @@ func TestEnvelope_SetEndSession(t *testing.T) {
 		{
 			name:  "true-input",
 			input: Bool(true),
-			expected: &Envelope{
-				Version: "1.0",
-				Response: Response{
-					ShouldEndSession: Bool(true),
-				},
-				SessionAttributes: make(map[string]interface{}),
+			expected: &Response{
+				ShouldEndSession: Bool(true),
 			},
-			validate: func(e *Envelope, t *testing.T) {
-				b, err := json.Marshal(e)
+			validate: func(r *Response, t *testing.T) {
+				b, err := json.Marshal(r)
 				if err != nil {
 					t.Errorf("unexpected error: %v", err)
 				}
@@ -237,15 +231,11 @@ func TestEnvelope_SetEndSession(t *testing.T) {
 		{
 			name:  "false-input",
 			input: Bool(false),
-			expected: &Envelope{
-				Version: "1.0",
-				Response: Response{
-					ShouldEndSession: Bool(false),
-				},
-				SessionAttributes: make(map[string]interface{}),
+			expected: &Response{
+				ShouldEndSession: Bool(false),
 			},
-			validate: func(e *Envelope, t *testing.T) {
-				b, err := json.Marshal(e)
+			validate: func(r *Response, t *testing.T) {
+				b, err := json.Marshal(r)
 				if err != nil {
 					t.Errorf("unexpected error: %v", err)
 				}
@@ -266,21 +256,16 @@ func TestEnvelope_SetEndSession(t *testing.T) {
 	}
 }
 
-func TestEnvelope_String_Success(t *testing.T) {
+func TestResponse_String_Success(t *testing.T) {
 	got := New().String()
-
-	b, err := json.Marshal(New())
-	if err != nil {
-		t.Error(err)
-	}
-	want := string(b)
+	want := `{"shouldEndSession":true}`
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
 	}
 }
 
-func TestEnvelope_String_Failure(t *testing.T) {
+func TestResponse_String_Failure(t *testing.T) {
 	jsonMarshal = func(v interface{}) ([]byte, error) {
 		return nil, errors.New("dummy error")
 	}
@@ -290,4 +275,6 @@ func TestEnvelope_String_Failure(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
 	}
+	// Restore the mocked jsonMarshal
+	jsonMarshal = json.Marshal
 }

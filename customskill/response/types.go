@@ -1,9 +1,9 @@
 package response
 
-type Envelope struct {
+type envelope struct {
 	Version           string                 `json:"version"`
 	SessionAttributes map[string]interface{} `json:"sessionAttributes,omitempty"`
-	Response          Response               `json:"response"`
+	Response          *Response              `json:"response"`
 }
 
 type Response struct {
