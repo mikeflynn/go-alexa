@@ -8,9 +8,9 @@ import (
 
 var jsonUnmarshal = json.Unmarshal // Used to enable unit testing
 
-// BootstrapFromJSON boostraps the Metadata and the specific Request from a JSON payload.
+// BootstrapFromJSON bootstraps the Metadata and the specific Request from a JSON payload.
 // It returns a Metadata pointer, a Request pointer, and an error.
-// The error will be non-nil if there are issues unmarshalling the JSON or if the request type is not supported.
+// The error will be non-nil if there are issues unmarshaling the JSON or if the request type is not supported.
 // If the error is non-nil the Metadata and Request pointers will be nil.
 func BootstrapFromJSON(data []byte) (*Metadata, interface{}, error) {
 	var efu envelope
