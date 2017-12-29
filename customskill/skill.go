@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// A Skill represents an Alexa custom skill.
 type Skill struct {
 	ValidApplicationIDs []string
 	OnLaunch            func(*request.LaunchRequest) (*response.Envelope, error)
@@ -80,9 +81,9 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 	return nil
 }
 
-func (s *Skill) applicationIDIsValid(appId string) bool {
+func (s *Skill) applicationIDIsValid(appID string) bool {
 	for _, str := range s.ValidApplicationIDs {
-		if str == appId {
+		if str == appID {
 			return true
 		}
 	}
