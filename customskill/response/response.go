@@ -11,7 +11,7 @@ func New() *Envelope {
 	e := &Envelope{
 		Version: "1.0",
 		Response: Response{
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -98,7 +98,7 @@ func (e *Envelope) SetLinkAccountCard() *Envelope {
 	return e
 }
 
-func (e *Envelope) SetEndSession(flag bool) *Envelope {
+func (e *Envelope) SetEndSession(flag *bool) *Envelope {
 	e.Response.ShouldEndSession = flag
 
 	return e
@@ -111,4 +111,8 @@ func (e *Envelope) String() string {
 	}
 
 	return string(b)
+}
+
+func Bool(bool bool) *bool {
+	return &bool
 }

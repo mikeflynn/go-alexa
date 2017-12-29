@@ -11,7 +11,7 @@ type Response struct {
 	Reprompt         *Reprompt     `json:"reprompt,omitempty"`
 	Card             *Card         `json:"card,omitempty"`
 	Directives       []interface{} `json:"directives,omitempty"`
-	ShouldEndSession bool          `json:"shouldEndSession"`
+	ShouldEndSession *bool         `json:"shouldEndSession,omitempty"`
 }
 
 type OutputSpeech struct {

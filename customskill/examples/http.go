@@ -38,7 +38,7 @@ func main() {
 
 func onLaunch(launchRequest *request.LaunchRequest) (*response.Envelope, error) {
 	resp := response.New()
-	resp.SetEndSession(true)
+	resp.SetEndSession(response.Bool(true))
 	sessAttrs := make(map[string]interface{})
 	sessAttrs["hello"] = "world"
 	resp.SessionAttributes = sessAttrs

@@ -3,6 +3,7 @@ package response
 import (
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -13,7 +14,7 @@ func TestNew(t *testing.T) {
 	want := &Envelope{
 		Version: "1.0",
 		Response: Response{
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -32,7 +33,7 @@ func TestEnvelope_SetOutputSpeech(t *testing.T) {
 				Type: "PlainText",
 				Text: "TestOutputSpeech",
 			},
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -51,7 +52,7 @@ func TestEnvelope_SetOutputSpeechSSML(t *testing.T) {
 				Type: "SSML",
 				SSML: "TestOutputSpeechSSML",
 			},
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -72,7 +73,7 @@ func TestEnvelope_SetReprompt(t *testing.T) {
 					Text: "TestReprompt",
 				},
 			},
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -93,7 +94,7 @@ func TestEnvelope_SetRepromptSSML(t *testing.T) {
 					SSML: "TestRepromptSSML",
 				},
 			},
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -113,7 +114,7 @@ func TestEnvelope_SetCard(t *testing.T) {
 				Title:   "TestTitle",
 				Content: "TestContent",
 			},
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -133,7 +134,7 @@ func TestEnvelope_SetSimpleCard(t *testing.T) {
 				Title:   "TestTitle",
 				Content: "TestContent",
 			},
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -157,7 +158,7 @@ func TestEnvelope_SetStandardCard(t *testing.T) {
 					LargeImageURL: "TestLargeImageURL",
 				},
 			},
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -175,7 +176,7 @@ func TestEnvelope_SetLinkAccountCard(t *testing.T) {
 			Card: &Card{
 				Type: "LinkAccount",
 			},
-			ShouldEndSession: true,
+			ShouldEndSession: Bool(true),
 		},
 		SessionAttributes: make(map[string]interface{}),
 	}
@@ -186,30 +187,82 @@ func TestEnvelope_SetLinkAccountCard(t *testing.T) {
 }
 
 func TestEnvelope_SetEndSession(t *testing.T) {
-	got := New().SetEndSession(true)
-	want := &Envelope{
-		Version: "1.0",
-		Response: Response{
-			ShouldEndSession: true,
+	var tests = []struct {
+		name     string
+		input    *bool
+		expected *Envelope
+		validate func(e *Envelope, T *testing.T)
+	}{
+		{
+			name:  "nil-input",
+			input: nil,
+			expected: &Envelope{
+				Version: "1.0",
+				Response: Response{
+					ShouldEndSession: nil,
+				},
+				SessionAttributes: make(map[string]interface{}),
+			},
+			validate: func(e *Envelope, t *testing.T) {
+				b, err := json.Marshal(e)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				if strings.Contains(string(b), "shouldEndSession") {
+					t.Errorf("unexpected shouldEndSession in marshaled JSON: %s", string(b))
+				}
+			},
 		},
-		SessionAttributes: make(map[string]interface{}),
-	}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
-	}
-
-	got = New().SetEndSession(false)
-	want = &Envelope{
-		Version: "1.0",
-		Response: Response{
-			ShouldEndSession: false,
+		{
+			name:  "true-input",
+			input: Bool(true),
+			expected: &Envelope{
+				Version: "1.0",
+				Response: Response{
+					ShouldEndSession: Bool(true),
+				},
+				SessionAttributes: make(map[string]interface{}),
+			},
+			validate: func(e *Envelope, t *testing.T) {
+				b, err := json.Marshal(e)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				want := `"shouldEndSession":true`
+				if !strings.Contains(string(b), want) {
+					t.Errorf("expected string %s in marshaled JSON: %s", want, string(b))
+				}
+			},
 		},
-		SessionAttributes: make(map[string]interface{}),
+		{
+			name:  "false-input",
+			input: Bool(false),
+			expected: &Envelope{
+				Version: "1.0",
+				Response: Response{
+					ShouldEndSession: Bool(false),
+				},
+				SessionAttributes: make(map[string]interface{}),
+			},
+			validate: func(e *Envelope, t *testing.T) {
+				b, err := json.Marshal(e)
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				want := `"shouldEndSession":false`
+				if !strings.Contains(string(b), want) {
+					t.Errorf("expected string %s in marshaled JSON: %s", want, string(b))
+				}
+			},
+		},
 	}
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
+	for _, test := range tests {
+		got := New().SetEndSession(test.input)
+		if !reflect.DeepEqual(got, test.expected) {
+			t.Errorf("%s: request mismatch:\n\tgot:    %#v\n\twanted: %#v", test.name, got, test.expected)
+		}
+		test.validate(got, t)
 	}
 }
 
