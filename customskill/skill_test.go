@@ -13,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: Need to test session attributes
 func TestSkill_Handle(t *testing.T) {
 
 	var tests = []struct {
@@ -30,7 +29,9 @@ func TestSkill_Handle(t *testing.T) {
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
 				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
-					return response.New(), nil, nil
+					sessAttrs := make(map[string]interface{})
+					sessAttrs["name"] = "happy-path-launch-request"
+					return response.New(), sessAttrs, nil
 				},
 			},
 			b: `
@@ -45,14 +46,16 @@ func TestSkill_Handle(t *testing.T) {
 				}
 			}`,
 			w:       bytes.NewBuffer(nil),
-			written: `{"version":"1.0","response":{"shouldEndSession":true}}`,
+			written: `{"version":"1.0","sessionAttributes":{"name":"happy-path-launch-request"},"response":{"shouldEndSession":true}}`,
 		},
 		{
 			name: "happy-path-intent-request",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
 				OnIntent: func(intentRequest *request.IntentRequest, session *request.Session) (*response.Response, map[string]interface{}, error) {
-					return response.New(), nil, nil
+					sessAttrs := make(map[string]interface{})
+					sessAttrs["name"] = "happy-path-intent-request"
+					return response.New(), sessAttrs, nil
 				},
 			},
 			b: `
@@ -67,7 +70,31 @@ func TestSkill_Handle(t *testing.T) {
 				}
 			}`,
 			w:       bytes.NewBuffer(nil),
-			written: `{"version":"1.0","response":{"shouldEndSession":true}}`,
+			written: `{"version":"1.0","sessionAttributes":{"name":"happy-path-intent-request"},"response":{"shouldEndSession":true}}`,
+		},
+		{
+			name: "happy-path-intent-request-with-session-attributes",
+			skill: &Skill{
+				ValidApplicationIDs: []string{"testApplicationId"},
+				OnIntent: func(intentRequest *request.IntentRequest, session *request.Session) (*response.Response, map[string]interface{}, error) {
+					session.Attributes["name"] = "happy-path-intent-request-with-session-attributes"
+					return response.New(), session.Attributes, nil
+				},
+			},
+			b: `
+			{
+				"session": {
+					"application": {
+						"applicationId": "testApplicationId"
+					},
+					"attributes": {}
+				},
+				"request": {
+					"type": "IntentRequest"
+				}
+			}`,
+			w:       bytes.NewBuffer(nil),
+			written: `{"version":"1.0","sessionAttributes":{"name":"happy-path-intent-request-with-session-attributes"},"response":{"shouldEndSession":true}}`,
 		},
 		{
 			name: "happy-path-session-ended-request",
