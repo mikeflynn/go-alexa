@@ -59,11 +59,11 @@ func (e *Envelope) SetRepromptSSML(text string) *Envelope {
 	return e
 }
 
-func (e *Envelope) SetCard(title string, content string) *Envelope {
+func (e *Envelope) SetCard(title, content string) *Envelope {
 	return e.SetSimpleCard(title, content)
 }
 
-func (e *Envelope) SetSimpleCard(title string, content string) *Envelope {
+func (e *Envelope) SetSimpleCard(title, content string) *Envelope {
 	e.Response.Card = &Card{
 		Type:    "Simple",
 		Title:   title,
@@ -73,7 +73,7 @@ func (e *Envelope) SetSimpleCard(title string, content string) *Envelope {
 	return e
 }
 
-func (e *Envelope) SetStandardCard(title string, content string, smallImg string, largeImg string) *Envelope {
+func (e *Envelope) SetStandardCard(title, content, smallImg, largeImg string) *Envelope {
 	e.Response.Card = &Card{
 		Type:    "Standard",
 		Title:   title,
