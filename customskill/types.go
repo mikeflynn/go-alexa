@@ -10,5 +10,5 @@ type Skill struct {
 	ValidApplicationIDs []string
 	OnLaunch            func(*request.LaunchRequest) (*response.Response, map[string]interface{}, error)
 	OnIntent            func(*request.IntentRequest, *request.Session) (*response.Response, map[string]interface{}, error)
-	OnSessionEnded      func(endedRequest *request.SessionEndedRequest) error
+	OnSessionEnded      func(*request.SessionEndedRequest) error
 }
