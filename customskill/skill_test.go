@@ -1,17 +1,12 @@
 package customskill
 
 import (
-	"testing"
-
-	"io"
-
-	"strings"
-
-	"encoding/json"
-
 	"bytes"
-
+	"encoding/json"
+	"io"
 	"io/ioutil"
+	"strings"
+	"testing"
 
 	"github.com/mikeflynn/go-alexa/customskill/request"
 	"github.com/mikeflynn/go-alexa/customskill/response"
