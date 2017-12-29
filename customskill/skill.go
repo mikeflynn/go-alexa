@@ -10,14 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// A Skill represents an Alexa custom skill.
-type Skill struct {
-	ValidApplicationIDs []string
-	OnLaunch            func(*request.LaunchRequest) (*response.Envelope, error)
-	OnIntent            func(*request.IntentRequest, *request.Session) (*response.Envelope, error)
-	OnSessionEnded      func(endedRequest *request.SessionEndedRequest) error
-}
-
 var jsonMarshal = json.Marshal
 
 // Handle parses a JSON payload, calls the appropriate request handler, serializes the response, and writes it to the provided writer.
