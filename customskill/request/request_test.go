@@ -2,11 +2,10 @@ package request
 
 import (
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/pkg/errors"
 )
 
 func TestRequest_BootstrapFromJSON(t *testing.T) {

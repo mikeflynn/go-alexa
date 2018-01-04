@@ -2,8 +2,7 @@ package request
 
 import (
 	"encoding/json"
-
-	"github.com/pkg/errors"
+	"errors"
 )
 
 var jsonUnmarshal = json.Unmarshal // Used to enable unit testing
@@ -16,29 +15,29 @@ func BootstrapFromJSON(data []byte) (*Metadata, interface{}, error) {
 	var efu envelope
 
 	if err := jsonUnmarshal(data, &efu); err != nil {
-		return nil, nil, errors.Errorf("failed to unmarshal elements common to all request envelopes: %v", err)
+		return nil, nil, errors.New("failed to unmarshal elements common to all request envelopes: " + err.Error())
 	}
 
 	switch efu.Request.Type {
 	case "LaunchRequest":
 		var env launchRequestEnvelope
 		if err := jsonUnmarshal(data, &env); err != nil {
-			return nil, nil, errors.Errorf("failed to unmarshal launch request envelope: %v", err)
+			return nil, nil, errors.New("failed to unmarshal launch request envelope: " + err.Error())
 		}
 		return &efu.Metadata, &env.Request, nil
 	case "IntentRequest":
 		var env intentRequestEnvelope
 		if err := jsonUnmarshal(data, &env); err != nil {
-			return nil, nil, errors.Errorf("failed to unmarshal intent request envelope: %v", err)
+			return nil, nil, errors.New("failed to unmarshal intent request envelope: " + err.Error())
 		}
 		return &efu.Metadata, &env.Request, nil
 	case "SessionEndedRequest":
 		var env sessionEndedRequestEnvelope
 		if err := jsonUnmarshal(data, &env); err != nil {
-			return nil, nil, errors.Errorf("failed to unmarshal session ended request envelope: %v", err)
+			return nil, nil, errors.New("failed to unmarshal session ended request envelope: " + err.Error())
 		}
 		return &efu.Metadata, &env.Request, nil
 	default:
-		return nil, nil, errors.Errorf("request type %s not supported", efu.Request.Type)
+		return nil, nil, errors.New("request type " + efu.Request.Type + " not supported")
 	}
 }

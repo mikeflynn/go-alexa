@@ -14,7 +14,16 @@ import (
 )
 
 func TestSkill_Handle(t *testing.T) {
+	handleTests(t)
+}
 
+func BenchmarkSkill_Handle(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		handleTests(b)
+	}
+}
+
+func handleTests(t testingiface) {
 	var tests = []struct {
 		name                     string
 		skill                    *Skill
@@ -348,6 +357,7 @@ func TestSkill_Handle(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		t.Logf("Testing: %s", test.name)
 		// Override mocked functions
 		if test.requestBootstrapFromJSON != nil {
 			requestBootstrapFromJSON = test.requestBootstrapFromJSON
@@ -376,47 +386,16 @@ func TestSkill_Handle(t *testing.T) {
 
 		if string(b) != test.written {
 			t.Errorf("%s: write mismatch:\n\tgot:    %v\n\texpected:%s", test.name, string(b), test.written)
-
 		}
-
 	}
-	/*
-	   	s := Skill{
-	   		ValidApplicationIDs: []string{"Test"},
-	   		OnIntent: func(request *request.IntentRequest, session *request.Session) (*response.Envelope, error) {
-	   			fmt.Printf("Request: %#v\n", *request)
-	   			fmt.Printf("Session: %#v\n", *session)
-
-	   			resp := response.NewResponse()
-	   			resp.OutputSpeech("Hello World")
-	   			resp.EndSession(true)
-	   			resp.SessionAttributes = session.Attributes
-	   			resp.SimpleCard("title", "content")
-
-	   			return resp, nil
-	   		},
-	   	}
-
-	   	buf := bytes.NewBuffer(nil)
-	   	if err := s.Handle(buf, []byte(`{
-	   		"version": "testVersion",
-	           "session": {
-	               "application": {
-	                   "applicationId": "Test"
-	               }
-	           },
-	   		"request": {
-	   	"type": "IntentRequest",
-	   	"dialogState": "testDialogState"
-	   	}
-	   	}`)); err != nil {
-	   		fmt.Printf("Got an error! %v", err)
-	   	}
-
-	   	fmt.Printf("Written response: %s", buf.String())*/
 }
 
 /* Test helper functions */
+
+type testingiface interface {
+	Logf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+}
 
 type badReadWriter struct {
 	n   int
