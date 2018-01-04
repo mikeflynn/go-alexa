@@ -1,8 +1,10 @@
 package customskill
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
+	"net/http"
 
 	"github.com/mikeflynn/go-alexa/customskill/request"
 	"github.com/mikeflynn/go-alexa/customskill/response"
@@ -12,6 +14,9 @@ import (
 var (
 	requestBootstrapFromJSON = request.BootstrapFromJSON
 	jsonMarshal              = json.Marshal
+	ioCopy                   = io.Copy
+	httpError                = http.Error
+	sHandle                  = func(s *Skill, w io.Writer, b []byte) error { return s.Handle(w, b) }
 )
 
 // Handle parses a JSON payload, calls the appropriate request handler, serializes the response, and writes it to the provided writer.
@@ -76,6 +81,21 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 		return errors.Errorf("failed to completely write response: %d of %d bytes written", n, len(jsonB))
 	}
 	return nil
+}
+
+func (s *Skill) DefaultHTTPHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	buf := bytes.NewBuffer(nil)
+	if _, err := ioCopy(buf, r.Body); err != nil {
+		httpError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if err := sHandle(s, w, buf.Bytes()); err != nil {
+		httpError(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *Skill) applicationIDIsValid(appID string) bool {
