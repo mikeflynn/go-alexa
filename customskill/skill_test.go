@@ -134,7 +134,7 @@ func handleTests(t testingiface) {
 			partialErrorMessage: strPointer("failed to bootstrap request from JSON payload"),
 		},
 		{
-			name: "unsupported-request-type-returns-error",
+			name: "nil-request-type-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
 			},
@@ -148,7 +148,23 @@ func handleTests(t testingiface) {
 				}, nil, nil
 			},
 			partialErrorMessage: strPointer("unsupported request type: <nil>"),
+		}, {
+			name: "unsupported-request-type-returns-error",
+			skill: &Skill{
+				ValidApplicationIDs: []string{"testApplicationId"},
+			},
+			requestBootstrapFromJSON: func(data []byte) (*request.Metadata, interface{}, error) {
+				return &request.Metadata{
+					Session: request.Session{
+						Application: request.Application{
+							ApplicationID: "testApplicationId",
+						},
+					},
+				}, 0, nil
+			},
+			partialErrorMessage: strPointer("unsupported request type: int"),
 		},
+
 		{
 			name:  "invalid-application-id-returns-error",
 			skill: &Skill{},
