@@ -47,10 +47,11 @@ type Context struct {
 }
 
 type System struct {
-	Application Application `json:"application"`
-	User        User        `json:"user"`
-	Device      Device      `json:"device"`
-	ApiEndpoint string      `json:"apiEndpoint"`
+	Application    Application `json:"application"`
+	User           User        `json:"user"`
+	Device         Device      `json:"device"`
+	ApiEndpoint    string      `json:"apiEndpoint"`
+	ApiAccessToken string      `json:"apiAccessToken"`
 }
 
 type Application struct {
