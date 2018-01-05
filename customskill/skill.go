@@ -40,7 +40,7 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 			return errors.New("no OnLaunch handler defined")
 		}
 		lr := e.(*request.LaunchRequest)
-		resp, sess, err = s.OnLaunch(lr)
+		resp, sess, err = s.OnLaunch(lr, m)
 		if err != nil {
 			return errors.New("OnLaunch handler failed: " + err.Error())
 		}
@@ -49,7 +49,7 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 			return errors.New("no OnIntent handler defined")
 		}
 		ir := e.(*request.IntentRequest)
-		resp, sess, err = s.OnIntent(ir, &m.Session)
+		resp, sess, err = s.OnIntent(ir, m)
 		if err != nil {
 			return errors.New("OnIntent handler failed: " + err.Error())
 		}
@@ -58,8 +58,8 @@ func (s *Skill) Handle(w io.Writer, b []byte) error {
 			return errors.New("no OnSessionEnded handler defined")
 		}
 		ser := e.(*request.SessionEndedRequest)
-		if err = s.OnSessionEnded(ser); err != nil {
-			return errors.New("OnSessionEnded handler failed: " + err.Error())
+		if err = s.OnSessionEnded(ser, m); err != nil {
+			return errors.New("OnSessionEnded handler failed:" + err.Error())
 		}
 		// A skill cannot return a response to SessionEndedRequest.
 		return nil
