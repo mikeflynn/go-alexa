@@ -3,14 +3,16 @@ package customskill
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/mikeflynn/go-alexa/customskill/request"
 	"github.com/mikeflynn/go-alexa/customskill/response"
-	"github.com/pkg/errors"
 )
 
 func TestSkill_Handle(t *testing.T) {
@@ -414,6 +416,110 @@ func TestSkill_Handle(t *testing.T) {
 	   	}
 
 	   	fmt.Printf("Written response: %s", buf.String())*/
+}
+
+func TestSkill_DefaultHTTPHandler(t *testing.T) {
+	checkCounter := 0
+	var tests = []struct {
+		name      string
+		checkNum  int
+		w         http.ResponseWriter
+		r         *http.Request
+		ioCopy    func(dst io.Writer, src io.Reader) (written int64, err error)
+		httpError func(w http.ResponseWriter, error string, code int)
+		sHandle   func(s *Skill, w io.Writer, b []byte) error
+	}{
+		{
+			name:     "happy-path",
+			checkNum: 1,
+			sHandle: func(s *Skill, w io.Writer, b []byte) error {
+				checkCounter++
+				got := string(b)
+				want := "happy-path"
+				if got != want {
+					t.Errorf("[happy-path] bytes written mismatch: got: %s, want: %s", got, want)
+				}
+				return nil
+			},
+			r: httptest.NewRequest("", "http://domain.tld", bytes.NewReader([]byte("happy-path"))),
+			httpError: func(w http.ResponseWriter, error string, code int) {
+				t.Error("[happy-path] unexpected http.Error call")
+			},
+		},
+		{
+			name:     "io-copy-error-sends-http-error",
+			checkNum: 1,
+			ioCopy: func(dst io.Writer, src io.Reader) (written int64, err error) {
+				return 0, errors.New("dummy error")
+			},
+			r: httptest.NewRequest("", "http://domain.tld", bytes.NewReader(nil)),
+			httpError: func(w http.ResponseWriter, error string, code int) {
+				checkCounter++
+				if w != nil {
+					t.Errorf("[io-copy-error-sends-http-error] http.Error w argument mismatch: got: %v, want: <nil>", w)
+				}
+				if error != http.StatusText(http.StatusInternalServerError) {
+					t.Errorf("[io-copy-error-sends-http-error] http.Error error argument mismatch: got: %s, want: %s", error, http.StatusText(http.StatusInternalServerError))
+				}
+				if code != http.StatusInternalServerError {
+					t.Errorf("[io-copy-error-sends-http-error] http.Error code argument mismatch: got: %d, want: %d", code, http.StatusInternalServerError)
+				}
+			},
+		},
+		{
+			name:     "s-Handle-error-sends-http-error",
+			checkNum: 1,
+			ioCopy: func(dst io.Writer, src io.Reader) (written int64, err error) {
+				return 0, nil
+			},
+			sHandle: func(s *Skill, w io.Writer, b []byte) error {
+				return errors.New("dummy error")
+			},
+			r: httptest.NewRequest("", "http://domain.tld", bytes.NewReader(nil)),
+			httpError: func(w http.ResponseWriter, error string, code int) {
+				checkCounter++
+				if w != nil {
+					t.Errorf("[s-Handle-error-sends-http-error] http.Error w argument mismatch: got: %v, want: <nil>", w)
+				}
+				if error != http.StatusText(http.StatusInternalServerError) {
+					t.Errorf("[s-Handle-error-sends-http-error] http.Error error argument mismatch: got: %s, want: %s", error, http.StatusText(http.StatusInternalServerError))
+				}
+				if code != http.StatusInternalServerError {
+					t.Errorf("[s-Handle-error-sends-http-error] http.Error code argument mismatch: got: %d, want: %d", code, http.StatusInternalServerError)
+				}
+			},
+		},
+	}
+
+	for _, test := range tests {
+		// Override the helper functions for each test
+		if test.ioCopy != nil {
+			ioCopy = test.ioCopy
+		}
+		if test.httpError != nil {
+			httpError = test.httpError
+		}
+		if test.sHandle != nil {
+			sHandle = test.sHandle
+		}
+
+		// Call the tested function
+		s := Skill{}
+		s.DefaultHTTPHandler(test.w, test.r)
+
+		// Check to ensure the desired number of checks were performed
+		if checkCounter != test.checkNum {
+			t.Errorf("[%s] check counter mismatch: got: %d, want: %d", test.name, test.checkNum, checkCounter)
+		}
+
+		// Reset the check counter
+		checkCounter = 0
+
+		// Restore the helper functions
+		ioCopy = io.Copy
+		httpError = http.Error
+		sHandle = func(s *Skill, w io.Writer, b []byte) error { return s.Handle(w, b) }
+	}
 }
 
 /* Test helper functions */
