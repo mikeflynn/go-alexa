@@ -1,9 +1,5 @@
 package response
 
-import (
-	"fmt"
-)
-
 func New() *Response {
 	return &Response{
 		ShouldEndSession: Bool(true),
@@ -98,7 +94,7 @@ func (r *Response) SetEndSession(flag *bool) *Response {
 func (r *Response) String() string {
 	b, err := jsonMarshal(r)
 	if err != nil {
-		return fmt.Sprintf("failed to marshal JSON: %v", err)
+		return "failed to marshal response to JSON: " + err.Error()
 	}
 
 	return string(b)

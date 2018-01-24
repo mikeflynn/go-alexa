@@ -35,7 +35,7 @@ func TestEnvelope_String_Failure(t *testing.T) {
 		return nil, errors.New("dummy error")
 	}
 	got := NewEnvelope(nil, nil).String()
-	want := "failed to marshal JSON: dummy error"
+	want := "failed to marshal envelope to JSON: dummy error"
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", got, want)
