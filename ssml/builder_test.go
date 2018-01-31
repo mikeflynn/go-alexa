@@ -65,18 +65,20 @@ func TestBuilder_AppendAmazonEffect(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		b, _ := NewBuilder()
+		t.Run(test.name, func(t *testing.T) {
+			b, _ := NewBuilder()
 
-		b.AppendAmazonEffect(test.effect, "text1").AppendAmazonEffect(test.effect, "text2")
+			b.AppendAmazonEffect(test.effect, "text1").AppendAmazonEffect(test.effect, "text2")
 
-		actual, errs := b.Build()
-		if !errsEqual(nil, errs) {
-			t.Errorf("%s: error mismatch: expected nil, got %v", test.name, errs)
-		}
+			actual, errs := b.Build()
+			if !errsEqual(nil, errs) {
+				t.Errorf("error mismatch: expected nil, got %v", errs)
+			}
 
-		if actual != test.expected {
-			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
-		}
+			if actual != test.expected {
+				t.Errorf("output mismatch: expected %s, got %s", test.expected, actual)
+			}
+		})
 	}
 }
 
@@ -114,18 +116,20 @@ func TestBuilder_AppendAudio(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		b, _ := NewBuilder()
+		t.Run(test.name, func(t *testing.T) {
+			b, _ := NewBuilder()
 
-		b.AppendAudio(test.src).AppendAudio(test.src)
+			b.AppendAudio(test.src).AppendAudio(test.src)
 
-		actual, errs := b.Build()
-		if !errsEqual(test.errs, errs) {
-			t.Errorf("%s: error mismatch: expected %+v, got %+v", test.name, test.errs, errs)
-		}
+			actual, errs := b.Build()
+			if !errsEqual(test.errs, errs) {
+				t.Errorf("error mismatch: expected %+v, got %+v", test.errs, errs)
+			}
 
-		if actual != test.expected {
-			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
-		}
+			if actual != test.expected {
+				t.Errorf("output mismatch: expected %s, got %s", test.expected, actual)
+			}
+		})
 	}
 }
 
@@ -202,18 +206,20 @@ func TestBuilder_AppendBreak(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		b, _ := NewBuilder()
+		t.Run(test.name, func(t *testing.T) {
+			b, _ := NewBuilder()
 
-		b.AppendBreak(test.param).AppendBreak(test.param)
+			b.AppendBreak(test.param).AppendBreak(test.param)
 
-		actual, errs := b.Build()
-		if !errsEqual(test.errs, errs) {
-			t.Errorf("%s: error mismatch: expected %v, got %v", test.name, test.errs, errs)
-		}
+			actual, errs := b.Build()
+			if !errsEqual(test.errs, errs) {
+				t.Errorf("error mismatch: expected %v, got %v", test.errs, errs)
+			}
 
-		if actual != test.expected {
-			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
-		}
+			if actual != test.expected {
+				t.Errorf("output mismatch: expected %s, got %s", test.expected, actual)
+			}
+		})
 	}
 }
 
@@ -252,18 +258,20 @@ func TestBuilder_AppendEmphasis(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		b, _ := NewBuilder()
+		t.Run(test.name, func(t *testing.T) {
+			b, _ := NewBuilder()
 
-		b.AppendEmphasis(test.level, "text1").AppendEmphasis(test.level, "text2")
+			b.AppendEmphasis(test.level, "text1").AppendEmphasis(test.level, "text2")
 
-		actual, errs := b.Build()
-		if !errsEqual(nil, errs) {
-			t.Errorf("%s: error mismatch: expected nil, got %v", test.name, errs)
-		}
+			actual, errs := b.Build()
+			if !errsEqual(nil, errs) {
+				t.Errorf("error mismatch: expected nil, got %v", errs)
+			}
 
-		if actual != test.expected {
-			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
-		}
+			if actual != test.expected {
+				t.Errorf("output mismatch: expected %s, got %s", test.expected, actual)
+			}
+		})
 	}
 }
 
@@ -456,18 +464,20 @@ func TestBuilder_AppendProsody(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		b, _ := NewBuilder()
+		t.Run(test.name, func(t *testing.T) {
+			b, _ := NewBuilder()
 
-		b.AppendProsody(test.rate, test.pitch, test.volume, "text1").AppendProsody(test.rate, test.pitch, test.volume, "text2")
+			b.AppendProsody(test.rate, test.pitch, test.volume, "text1").AppendProsody(test.rate, test.pitch, test.volume, "text2")
 
-		actual, errs := b.Build()
-		if !errsEqual(test.errs, errs) {
-			t.Errorf("%s: error mismatch: expected %v, got %v", test.name, test.errs, errs)
-		}
+			actual, errs := b.Build()
+			if !errsEqual(test.errs, errs) {
+				t.Errorf("error mismatch: expected %v, got %v", test.errs, errs)
+			}
 
-		if actual != test.expected {
-			t.Errorf("%s: output mismatch: expected %s, got %s", test.name, test.expected, actual)
-		}
+			if actual != test.expected {
+				t.Errorf("output mismatch: expected %s, got %s", test.expected, actual)
+			}
+		})
 	}
 }
 
