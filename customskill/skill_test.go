@@ -2,7 +2,6 @@ package customskill
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -364,22 +363,28 @@ func TestSkill_Handle(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// Override mocked functions
+			// Record & restore original functions.
+			requestBootstrapFromJSONOriginal := requestBootstrapFromJSON
+			jsonMarshalOriginal := jsonMarshal
+			defer func() {
+				requestBootstrapFromJSON = requestBootstrapFromJSONOriginal
+				jsonMarshal = jsonMarshalOriginal
+			}()
+
+			// Override mocked functions.
 			if test.requestBootstrapFromJSON != nil {
 				requestBootstrapFromJSON = test.requestBootstrapFromJSON
 			}
 			if test.jsonMarshal != nil {
 				jsonMarshal = test.jsonMarshal
 			}
+
+			// Exercise the function being tested.
 			err := test.skill.Handle(test.w, []byte(test.b))
 			if !errorContains(err, test.partialErrorMessage) {
 				t.Errorf("error mismatch:\n\tgot:    %v\n\twanted: it to contain '%s'", err, pointerStr(test.partialErrorMessage))
 				return
 			}
-
-			// Restore mocked functions
-			requestBootstrapFromJSON = request.BootstrapFromJSON
-			jsonMarshal = json.Marshal
 
 			if test.partialErrorMessage != nil {
 				return

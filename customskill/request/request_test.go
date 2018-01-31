@@ -195,8 +195,16 @@ func TestRequest_BootstrapFromJSON(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// Record & restore original functions.
+			jsonUnmarshalOriginal := jsonUnmarshal
+			defer func() {
+				jsonUnmarshal = jsonUnmarshalOriginal
+			}()
+
+			// Override mocked functions.
 			jsonUnmarshal = test.jsonUnmarshal
 
+			// Exercise the function being tested.
 			m, r, err := BootstrapFromJSON([]byte(test.payload))
 			if !errorContains(err, test.partialErrorMessage) {
 				t.Errorf("error mismatch:\n\tgot:    %v\n\texpected: it to contain %s", err, pointerStr(test.partialErrorMessage))
