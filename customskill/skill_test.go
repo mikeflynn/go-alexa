@@ -14,16 +14,6 @@ import (
 )
 
 func TestSkill_Handle(t *testing.T) {
-	handleTests(t)
-}
-
-func BenchmarkSkill_Handle(b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		handleTests(b)
-	}
-}
-
-func handleTests(t testingiface) {
 	var tests = []struct {
 		name                     string
 		skill                    *Skill
@@ -407,11 +397,6 @@ func handleTests(t testingiface) {
 }
 
 /* Test helper functions */
-
-type testingiface interface {
-	Logf(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-}
 
 type badReadWriter struct {
 	n   int
