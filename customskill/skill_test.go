@@ -363,36 +363,37 @@ func TestSkill_Handle(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Logf("Testing: %s", test.name)
-		// Override mocked functions
-		if test.requestBootstrapFromJSON != nil {
-			requestBootstrapFromJSON = test.requestBootstrapFromJSON
-		}
-		if test.jsonMarshal != nil {
-			jsonMarshal = test.jsonMarshal
-		}
-		err := test.skill.Handle(test.w, []byte(test.b))
-		if !errorContains(err, test.partialErrorMessage) {
-			t.Errorf("%s: error mismatch:\n\tgot:    %v\n\twanted: it to contain '%s'", test.name, err, pointerStr(test.partialErrorMessage))
-			continue
-		}
+		t.Run(test.name, func(t *testing.T) {
+			// Override mocked functions
+			if test.requestBootstrapFromJSON != nil {
+				requestBootstrapFromJSON = test.requestBootstrapFromJSON
+			}
+			if test.jsonMarshal != nil {
+				jsonMarshal = test.jsonMarshal
+			}
+			err := test.skill.Handle(test.w, []byte(test.b))
+			if !errorContains(err, test.partialErrorMessage) {
+				t.Errorf("error mismatch:\n\tgot:    %v\n\twanted: it to contain '%s'", err, pointerStr(test.partialErrorMessage))
+				return
+			}
 
-		// Restore mocked functions
-		requestBootstrapFromJSON = request.BootstrapFromJSON
-		jsonMarshal = json.Marshal
+			// Restore mocked functions
+			requestBootstrapFromJSON = request.BootstrapFromJSON
+			jsonMarshal = json.Marshal
 
-		if test.partialErrorMessage != nil {
-			continue
-		}
+			if test.partialErrorMessage != nil {
+				return
+			}
 
-		b, err := ioutil.ReadAll(test.w)
-		if err != nil {
-			t.Errorf("%s: failed to read test writer: %v", test.name, err)
-		}
+			b, err := ioutil.ReadAll(test.w)
+			if err != nil {
+				t.Errorf("failed to read test writer: %v", err)
+			}
 
-		if string(b) != test.written {
-			t.Errorf("%s: write mismatch:\n\tgot:    %v\n\texpected:%s", test.name, string(b), test.written)
-		}
+			if string(b) != test.written {
+				t.Errorf("write mismatch:\n\tgot:    %v\n\texpected:%s", string(b), test.written)
+			}
+		})
 	}
 }
 

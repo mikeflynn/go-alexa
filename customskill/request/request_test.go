@@ -194,25 +194,27 @@ func TestRequest_BootstrapFromJSON(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		jsonUnmarshal = test.jsonUnmarshal
+		t.Run(test.name, func(t *testing.T) {
+			jsonUnmarshal = test.jsonUnmarshal
 
-		m, r, err := BootstrapFromJSON([]byte(test.payload))
-		if !errorContains(err, test.partialErrorMessage) {
-			t.Errorf("%s: error mismatch:\n\tgot:    %v\n\texpected: it to contain %s", test.name, err, pointerStr(test.partialErrorMessage))
-			continue
-		}
+			m, r, err := BootstrapFromJSON([]byte(test.payload))
+			if !errorContains(err, test.partialErrorMessage) {
+				t.Errorf("error mismatch:\n\tgot:    %v\n\texpected: it to contain %s", err, pointerStr(test.partialErrorMessage))
+				return
+			}
 
-		if test.partialErrorMessage != nil {
-			continue
-		}
+			if test.partialErrorMessage != nil {
+				return
+			}
 
-		if !reflect.DeepEqual(*m, *test.metadata) {
-			t.Errorf("%s: metadata mismatch:\n\tgot:    %#v\n\twanted: %#v", test.name, *m, *test.metadata)
-		}
+			if !reflect.DeepEqual(*m, *test.metadata) {
+				t.Errorf("metadata mismatch:\n\tgot:    %#v\n\twanted: %#v", *m, *test.metadata)
+			}
 
-		if !reflect.DeepEqual(r, test.request) {
-			t.Errorf("%s: request mismatch:\n\tgot:    %#v\n\twanted: %#v", test.name, r, test.request)
-		}
+			if !reflect.DeepEqual(r, test.request) {
+				t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", r, test.request)
+			}
+		})
 	}
 }
 
