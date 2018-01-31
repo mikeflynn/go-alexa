@@ -207,7 +207,7 @@ func TestRequest_BootstrapFromJSON(t *testing.T) {
 			// Exercise the function being tested.
 			m, r, err := BootstrapFromJSON([]byte(test.payload))
 			if !errorContains(err, test.partialErrorMessage) {
-				t.Errorf("error mismatch:\n\tgot:    %v\n\texpected: it to contain %s", err, pointerStr(test.partialErrorMessage))
+				t.Errorf("error mismatch:\n\tgot:    %v\n\twanted: it to contain %s", err, pointerStr(test.partialErrorMessage))
 				return
 			}
 
@@ -216,11 +216,11 @@ func TestRequest_BootstrapFromJSON(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(*m, *test.metadata) {
-				t.Errorf("metadata mismatch:\n\tgot:    %#v\n\twanted: %#v", *m, *test.metadata)
+				t.Errorf("metadata mismatch: got: %+v, wanted: %+v", *m, *test.metadata)
 			}
 
 			if !reflect.DeepEqual(r, test.request) {
-				t.Errorf("request mismatch:\n\tgot:    %#v\n\twanted: %#v", r, test.request)
+				t.Errorf("request mismatch: got: %+v, wanted: %+v", r, test.request)
 			}
 		})
 	}

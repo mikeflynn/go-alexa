@@ -382,7 +382,7 @@ func TestSkill_Handle(t *testing.T) {
 			// Exercise the function being tested.
 			err := test.skill.Handle(test.w, []byte(test.b))
 			if !errorContains(err, test.partialErrorMessage) {
-				t.Errorf("error mismatch:\n\tgot:    %v\n\twanted: it to contain '%s'", err, pointerStr(test.partialErrorMessage))
+				t.Errorf("error mismatch: got: %+v, wanted: it to contain '%s'", err, pointerStr(test.partialErrorMessage))
 				return
 			}
 
@@ -396,7 +396,7 @@ func TestSkill_Handle(t *testing.T) {
 			}
 
 			if string(b) != test.written {
-				t.Errorf("write mismatch:\n\tgot:    %v\n\texpected:%s", string(b), test.written)
+				t.Errorf("write mismatch: got: %+v, wanted: %s", string(b), test.written)
 			}
 		})
 	}
