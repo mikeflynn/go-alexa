@@ -2,7 +2,6 @@ package customskill
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -14,16 +13,6 @@ import (
 )
 
 func TestSkill_Handle(t *testing.T) {
-	handleTests(t)
-}
-
-func BenchmarkSkill_Handle(b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		handleTests(b)
-	}
-}
-
-func handleTests(t testingiface) {
 	var tests = []struct {
 		name                     string
 		skill                    *Skill
@@ -373,45 +362,47 @@ func handleTests(t testingiface) {
 	}
 
 	for _, test := range tests {
-		t.Logf("Testing: %s", test.name)
-		// Override mocked functions
-		if test.requestBootstrapFromJSON != nil {
-			requestBootstrapFromJSON = test.requestBootstrapFromJSON
-		}
-		if test.jsonMarshal != nil {
-			jsonMarshal = test.jsonMarshal
-		}
-		err := test.skill.Handle(test.w, []byte(test.b))
-		if !errorContains(err, test.partialErrorMessage) {
-			t.Errorf("%s: error mismatch:\n\tgot:    %v\n\twanted: it to contain '%s'", test.name, err, pointerStr(test.partialErrorMessage))
-			continue
-		}
+		t.Run(test.name, func(t *testing.T) {
+			// Record & restore original functions.
+			requestBootstrapFromJSONOriginal := requestBootstrapFromJSON
+			jsonMarshalOriginal := jsonMarshal
+			defer func() {
+				requestBootstrapFromJSON = requestBootstrapFromJSONOriginal
+				jsonMarshal = jsonMarshalOriginal
+			}()
 
-		// Restore mocked functions
-		requestBootstrapFromJSON = request.BootstrapFromJSON
-		jsonMarshal = json.Marshal
+			// Override mocked functions.
+			if test.requestBootstrapFromJSON != nil {
+				requestBootstrapFromJSON = test.requestBootstrapFromJSON
+			}
+			if test.jsonMarshal != nil {
+				jsonMarshal = test.jsonMarshal
+			}
 
-		if test.partialErrorMessage != nil {
-			continue
-		}
+			// Exercise the function being tested.
+			err := test.skill.Handle(test.w, []byte(test.b))
+			if !errorContains(err, test.partialErrorMessage) {
+				t.Errorf("error mismatch: got: %+v, wanted: it to contain '%s'", err, pointerStr(test.partialErrorMessage))
+				return
+			}
 
-		b, err := ioutil.ReadAll(test.w)
-		if err != nil {
-			t.Errorf("%s: failed to read test writer: %v", test.name, err)
-		}
+			if test.partialErrorMessage != nil {
+				return
+			}
 
-		if string(b) != test.written {
-			t.Errorf("%s: write mismatch:\n\tgot:    %v\n\texpected:%s", test.name, string(b), test.written)
-		}
+			b, err := ioutil.ReadAll(test.w)
+			if err != nil {
+				t.Errorf("failed to read test writer: %v", err)
+			}
+
+			if string(b) != test.written {
+				t.Errorf("write mismatch: got: %+v, wanted: %s", string(b), test.written)
+			}
+		})
 	}
 }
 
 /* Test helper functions */
-
-type testingiface interface {
-	Logf(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-}
 
 type badReadWriter struct {
 	n   int
