@@ -8,7 +8,7 @@ import (
 // A Skill represents an Alexa custom skill.
 type Skill struct {
 	ValidApplicationIDs []string
-	OnLaunch            func(*request.LaunchRequest) (*response.Response, map[string]interface{}, error)
-	OnIntent            func(*request.IntentRequest, *request.Session) (*response.Response, map[string]interface{}, error)
-	OnSessionEnded      func(*request.SessionEndedRequest) error
+	OnLaunch            func(*request.LaunchRequest, *request.Metadata) (*response.Response, map[string]interface{}, error)
+	OnIntent            func(*request.IntentRequest, *request.Metadata) (*response.Response, map[string]interface{}, error)
+	OnSessionEnded      func(*request.SessionEndedRequest, *request.Metadata) error
 }

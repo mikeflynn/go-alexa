@@ -36,10 +36,9 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
-func onLaunch(launchRequest *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+func onLaunch(launchRequest *request.LaunchRequest, metadata *request.Metadata) (*response.Response, map[string]interface{}, error) {
 	resp := response.New()
 	resp.SetEndSession(response.Bool(true))
-	sessAttrs := make(map[string]interface{})
-	sessAttrs["hello"] = "world"
-	return resp, sessAttrs, nil
+	metadata.Session.Attributes["hello"] = "world"
+	return resp, metadata.Session.Attributes, nil
 }

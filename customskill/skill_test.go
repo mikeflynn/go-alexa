@@ -38,7 +38,7 @@ func handleTests(t testingiface) {
 			name: "happy-path-launch-request",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+				OnLaunch: func(request *request.LaunchRequest, metadata *request.Metadata) (*response.Response, map[string]interface{}, error) {
 					sessAttrs := make(map[string]interface{})
 					sessAttrs["name"] = "happy-path-launch-request"
 					return response.New(), sessAttrs, nil
@@ -62,7 +62,7 @@ func handleTests(t testingiface) {
 			name: "happy-path-intent-request",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnIntent: func(intentRequest *request.IntentRequest, session *request.Session) (*response.Response, map[string]interface{}, error) {
+				OnIntent: func(intentRequest *request.IntentRequest, metadata *request.Metadata) (*response.Response, map[string]interface{}, error) {
 					sessAttrs := make(map[string]interface{})
 					sessAttrs["name"] = "happy-path-intent-request"
 					return response.New(), sessAttrs, nil
@@ -86,9 +86,9 @@ func handleTests(t testingiface) {
 			name: "happy-path-intent-request-with-session-attributes",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnIntent: func(intentRequest *request.IntentRequest, session *request.Session) (*response.Response, map[string]interface{}, error) {
-					session.Attributes["name"] = "happy-path-intent-request-with-session-attributes"
-					return response.New(), session.Attributes, nil
+				OnIntent: func(intentRequest *request.IntentRequest, metadata *request.Metadata) (*response.Response, map[string]interface{}, error) {
+					metadata.Session.Attributes["name"] = "happy-path-intent-request-with-session-attributes"
+					return response.New(), metadata.Session.Attributes, nil
 				},
 			},
 			b: `
@@ -110,7 +110,7 @@ func handleTests(t testingiface) {
 			name: "happy-path-session-ended-request",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnSessionEnded: func(endedRequest *request.SessionEndedRequest) error {
+				OnSessionEnded: func(endedRequest *request.SessionEndedRequest, metadata *request.Metadata) error {
 					return nil
 				},
 			},
@@ -203,7 +203,7 @@ func handleTests(t testingiface) {
 			name: "on-launch-request-handler-error-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+				OnLaunch: func(request *request.LaunchRequest, metadata *request.Metadata) (*response.Response, map[string]interface{}, error) {
 					return nil, nil, errors.New("dummy error")
 				},
 			},
@@ -242,7 +242,7 @@ func handleTests(t testingiface) {
 			name: "on-intent-request-handler-error-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnIntent: func(intentRequest *request.IntentRequest, session *request.Session) (*response.Response, map[string]interface{}, error) {
+				OnIntent: func(intentRequest *request.IntentRequest, metadata *request.Metadata) (*response.Response, map[string]interface{}, error) {
 					return nil, nil, errors.New("dummy error")
 				},
 			},
@@ -281,7 +281,7 @@ func handleTests(t testingiface) {
 			name: "on-session-ended-request-handler-error-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnSessionEnded: func(endedRequest *request.SessionEndedRequest) error {
+				OnSessionEnded: func(endedRequest *request.SessionEndedRequest, metadata *request.Metadata) error {
 					return errors.New("dummy error")
 				},
 			},
@@ -302,7 +302,7 @@ func handleTests(t testingiface) {
 			name: "responses-which-cannot-be-marshalled-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+				OnLaunch: func(request *request.LaunchRequest, metadata *request.Metadata) (*response.Response, map[string]interface{}, error) {
 					return nil, nil, nil
 				},
 			},
@@ -326,7 +326,7 @@ func handleTests(t testingiface) {
 			name: "writer-which-cannot-be-written-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+				OnLaunch: func(request *request.LaunchRequest, metadata *request.Metadata) (*response.Response, map[string]interface{}, error) {
 					return nil, nil, nil
 				},
 			},
@@ -350,7 +350,7 @@ func handleTests(t testingiface) {
 			name: "writer-which-partially-writes-returns-error",
 			skill: &Skill{
 				ValidApplicationIDs: []string{"testApplicationId"},
-				OnLaunch: func(request *request.LaunchRequest) (*response.Response, map[string]interface{}, error) {
+				OnLaunch: func(request *request.LaunchRequest, metadata *request.Metadata) (*response.Response, map[string]interface{}, error) {
 					return nil, nil, nil
 				},
 			},
