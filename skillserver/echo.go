@@ -58,23 +58,7 @@ func (this *EchoRequest) AllSlots() map[string]EchoSlot {
 }
 
 // Locale returns the locale specified in the request.
-//
-// If `locales` is provided, the first matching locale will be returned,
-// falling back to the first provided value if none match the request.
-//
-// (Matching is performed via a strict string comparison. For more
-// advanced matching, you may want to use the "golang.org/x/text/language"
-// library instead.)
-func (this *EchoRequest) Locale(locales ...string) string {
-	if len(locales) > 0 {
-		for _, locale := range locales {
-			if this.Request.Locale == locale {
-				return locale
-			}
-		}
-		return locales[0]
-	}
-
+func (this *EchoRequest) Locale() string {
 	return this.Request.Locale
 }
 
