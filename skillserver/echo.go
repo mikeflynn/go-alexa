@@ -57,6 +57,11 @@ func (this *EchoRequest) AllSlots() map[string]EchoSlot {
 	return this.Request.Intent.Slots
 }
 
+// Locale returns the locale specified in the request.
+func (this *EchoRequest) Locale() string {
+	return this.Request.Locale
+}
+
 // Response Functions
 func NewEchoResponse() *EchoResponse {
 	er := &EchoResponse{
@@ -204,6 +209,7 @@ type EchoReqBody struct {
 	Timestamp string     `json:"timestamp"`
 	Intent    EchoIntent `json:"intent,omitempty"`
 	Reason    string     `json:"reason,omitempty"`
+	Locale    string     `json:"locale,omitempty"`
 }
 
 type EchoIntent struct {
