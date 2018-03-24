@@ -19,8 +19,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
+	"github.com/urfave/negroni"
 )
 
 type EchoApplication struct {
@@ -38,6 +38,8 @@ type StdApplication struct {
 }
 
 var Applications = map[string]interface{}{}
+var RootPrefix = "/"
+var EchoPrefix = "/echo/"
 
 func Run(apps map[string]interface{}, port string) {
 	router := mux.NewRouter()
@@ -46,6 +48,14 @@ func Run(apps map[string]interface{}, port string) {
 	n := negroni.Classic()
 	n.UseHandler(router)
 	n.Run(":" + port)
+}
+
+func SetEchoPrefix(prefix string) {
+	EchoPrefix = prefix
+}
+
+func SetRootPrefix(prefix string) {
+	RootPrefix = prefix
 }
 
 func RunSSL(apps map[string]interface{}, port, cert, key string) error {
@@ -63,6 +73,8 @@ func Init(apps map[string]interface{}, router *mux.Router) {
 	echoRouter := mux.NewRouter()
 	// /* Endpoints
 	pageRouter := mux.NewRouter()
+
+	hasPageRouter := false
 
 	for uri, meta := range Applications {
 		switch app := meta.(type) {
@@ -102,19 +114,22 @@ func Init(apps map[string]interface{}, router *mux.Router) {
 
 			echoRouter.HandleFunc(uri, handlerFunc).Methods("POST")
 		case StdApplication:
+			hasPageRouter = true
 			pageRouter.HandleFunc(uri, app.Handler).Methods(app.Methods)
 		}
 	}
 
-	router.PathPrefix("/echo/").Handler(negroni.New(
+	router.PathPrefix(EchoPrefix).Handler(negroni.New(
 		negroni.HandlerFunc(validateRequest),
 		negroni.HandlerFunc(verifyJSON),
 		negroni.Wrap(echoRouter),
 	))
 
-	router.PathPrefix("/").Handler(negroni.New(
-		negroni.Wrap(pageRouter),
-	))
+	if hasPageRouter {
+		router.PathPrefix(RootPrefix).Handler(negroni.New(
+			negroni.Wrap(pageRouter),
+		))
+	}
 }
 
 func GetEchoRequest(r *http.Request) *EchoRequest {
