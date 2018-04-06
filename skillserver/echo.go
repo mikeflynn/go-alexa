@@ -218,8 +218,27 @@ type EchoIntent struct {
 }
 
 type EchoSlot struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
+	Name        string `json:"name"`
+	Value       string `json:"value"`
+	Resolutions struct {
+		ResolutionsPerAuthority []EchoResolution `json:"resolutionsPerAuthority"`
+	} `json:"resolutions"`
+	ConfirmationStatus string `json:"confirmationStatus`
+}
+
+type EchoResolution struct {
+	Authority string `json:"authority`
+	Status    struct {
+		Code string `json:"code"`
+	} `json:"status"`
+	Values []ResolutionValue `json:"values"`
+}
+
+type ResolutionValue struct {
+	Value struct {
+		Name string `json:"name"`
+		ID   string `json:"id"`
+	}
 }
 
 // Response Types
