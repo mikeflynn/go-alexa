@@ -231,7 +231,7 @@ type EchoResolution struct {
 	Status    struct {
 		Code string `json:"code"`
 	} `json:"status"`
-	Values []ResolutionValue `json:"values"`
+	Values *[]ResolutionValue `json:"values"`
 }
 
 type ResolutionValue struct {
