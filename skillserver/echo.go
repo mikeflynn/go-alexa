@@ -238,7 +238,7 @@ type ResolutionValue struct {
 	Value struct {
 		Name string `json:"name"`
 		ID   string `json:"id"`
-	}
+	} `json:"value"`
 }
 
 // Response Types
