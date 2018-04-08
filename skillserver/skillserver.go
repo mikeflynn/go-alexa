@@ -159,8 +159,9 @@ func verifyJSON(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		return
 	}
 
-	// Check the app id
-	if !echoReq.VerifyAppID(Applications[r.URL.Path].(EchoApplication).AppID) {
+	if Applications[r.URL.Path] != nil &&
+		Applications[r.URL.Path].(EchoApplication).AppID != "" &&
+		!echoReq.VerifyAppID(Applications[r.URL.Path].(EchoApplication).AppID) {
 		HTTPError(w, "Echo AppID mismatch!", "Bad Request", 400)
 		return
 	}
