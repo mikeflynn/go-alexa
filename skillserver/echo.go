@@ -223,11 +223,11 @@ type EchoSlot struct {
 	Resolutions struct {
 		ResolutionsPerAuthority []EchoResolution `json:"resolutionsPerAuthority"`
 	} `json:"resolutions"`
-	ConfirmationStatus string `json:"confirmationStatus`
+	ConfirmationStatus string `json:"confirmationStatus"`
 }
 
 type EchoResolution struct {
-	Authority string `json:"authority`
+	Authority string `json:"authority"`
 	Status    struct {
 		Code string `json:"code"`
 	} `json:"status"`
