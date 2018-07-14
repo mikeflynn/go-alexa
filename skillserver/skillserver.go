@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto"
 	"crypto/rsa"
+	"crypto/tls"
 	"crypto/sha1"
 	"crypto/x509"
 	"encoding/base64"
@@ -58,12 +59,26 @@ func SetRootPrefix(prefix string) {
 	RootPrefix = prefix
 }
 
-func RunSSL(apps map[string]interface{}, port, cert, key string) error {
-	router := mux.NewRouter()
-	Init(apps, router)
+func RunSSL(apps map[string]interface{}, port, cert, key string) {
+  router := mux.NewRouter()
+  Init(apps, router)
 
-	err := http.ListenAndServeTLS(port, cert, key, router)
-	return err
+  cfg := &tls.Config{
+      MinVersion:               tls.VersionTLS12,
+      CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+      PreferServerCipherSuites: true,
+      CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+      },
+  }
+  srv := &http.Server{
+      Addr:         ":" + port,
+      Handler:      router,
+      TLSConfig:    cfg,
+      TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+  }
+  println("starting server...")
+  log.Fatal(srv.ListenAndServeTLS(cert, key))
 }
 
 func Init(apps map[string]interface{}, router *mux.Router) {
