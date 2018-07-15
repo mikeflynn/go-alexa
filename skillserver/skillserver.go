@@ -59,38 +59,38 @@ func SetRootPrefix(prefix string) {
 	RootPrefix = prefix
 }
 
-// RunSSL takes in a map of application, server port, certificate and key file names, and
+// RunSSL takes in a map of application, server port, certificate and key files, and
 // tries to start a TLS server which alexa can directly pass commands to.
-// It returns back an error if the server couldn't be started. Or else the method blocks
-// at ListenAndServeTLS line
-// IF the server starts succcessfully and there are connection errors afterwards, they are
-// logged to the stdout and no error is returned
+// It panics out with the error if the server couldn't be started. Or else the method blocks
+// at ListenAndServeTLS line.
+// If the server starts succcessfully and there are connection errors afterwards, they are
+// logged to the stdout and no error is returned.
 // For generating a testing cert and key, read the following:
 // https://developer.amazon.com/docs/custom-skills/configure-web-service-self-signed-certificate.html
-func RunSSL(apps map[string]interface{}, port, cert, key string) error {
-  router := mux.NewRouter()
-  Init(apps, router)
+func RunSSL(apps map[string]interface{}, port, cert, key string) {
+	router := mux.NewRouter()
+	Init(apps, router)
 
-  // This is very limited TLS configuration which is required to connect alexa to our webservice.
-  // The curve preferences are used by ECDSA/ECDHE algorithms for figuring out the mathing algorithm
-  // from alexa side starting from the strongest to the weakest
-  cfg := &tls.Config{
-    MinVersion:               tls.VersionTLS12,
-    CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
-    PreferServerCipherSuites: true,
-    CipherSuites: []uint16{
-      //If the connection throws errors related to crypt algorithm mismatch between server and client,
-      //this line must be replaced by constants present in crypt/tls package for the value that works
-      tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-    },
-  }
-  srv := &http.Server{
-    Addr:         ":" + port,
-    Handler:      router,
-    TLSConfig:    cfg,
-    TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
-  }
-  return srv.ListenAndServeTLS(cert, key)
+	// This is very limited TLS configuration which is required to connect alexa to our webservice.
+	// The curve preferences are used by ECDSA/ECDHE algorithms for figuring out the matching algorithm
+	// from alexa side starting from the strongest to the weakest.
+	cfg := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			// If the connection throws errors related to crypt algorithm mismatch between server and client,
+			// this line must be replaced by constants present in crypt/tls package for the value that works.
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+		},
+	}
+	srv := &http.Server{
+		Addr:         ":" + port,
+		Handler:      router,
+		TLSConfig:    cfg,
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+	}
+	log.Fatal(srv.ListenAndServeTLS(cert, key))
 }
 
 func Init(apps map[string]interface{}, router *mux.Router) {
