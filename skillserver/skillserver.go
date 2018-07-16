@@ -5,8 +5,8 @@ import (
 	"context"
 	"crypto"
 	"crypto/rsa"
-	"crypto/tls"
 	"crypto/sha1"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -107,7 +107,7 @@ func Init(apps map[string]interface{}, router *mux.Router) {
 		switch app := meta.(type) {
 		case EchoApplication:
 			handlerFunc := func(w http.ResponseWriter, r *http.Request) {
-				echoReq := r.Context().Value("echoRequest").(*EchoRequest)
+				echoReq := GetEchoRequest(r)
 				echoResp := NewEchoResponse()
 
 				if echoReq.GetRequestType() == "LaunchRequest" {
@@ -291,14 +291,26 @@ func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func readCert(certURL string) ([]byte, error) {
-	cert, err := http.Get(certURL)
+	certPool, err := x509.SystemCertPool()
+	insecureSkipVerify := false
+	if err != nil || certPool == nil {
+		log.Println("Can't open system cert pools, doing insecure skip verify instead")
+		insecureSkipVerify = true
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{RootCAs: certPool, InsecureSkipVerify: insecureSkipVerify},
+	}
+	hc := &http.Client{Timeout: 2 * time.Second, Transport: tr}
+
+	cert, err := hc.Get(certURL)
 	if err != nil {
-		return nil, errors.New("Could not download Amazon cert file.")
+		return nil, errors.New("Could not download Amazon cert file. Reason: " + err.Error())
 	}
 	defer cert.Body.Close()
 	certContents, err := ioutil.ReadAll(cert.Body)
 	if err != nil {
-		return nil, errors.New("Could not read Amazon cert file.")
+		return nil, errors.New("Could not read Amazon cert file. Reason: " + err.Error())
 	}
 
 	return certContents, nil
