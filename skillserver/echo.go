@@ -171,6 +171,11 @@ func (this *EchoResponse) EndSession(flag bool) *EchoResponse {
 	return this
 }
 
+func (this *EchoResponse) Dialog(name string, intent *EchoIntent) *EchoResponse {
+	this.Response.Directives = append(this.Response.Directives, &EchoDirective{Type: name, UpdatedIntent: intent})
+	return this
+}
+
 func (this *EchoResponse) String() ([]byte, error) {
 	jsonStr, err := json.Marshal(this)
 	if err != nil {
@@ -214,23 +219,26 @@ type EchoContext struct {
 }
 
 type EchoReqBody struct {
-	Type      string     `json:"type"`
-	RequestID string     `json:"requestId"`
-	Timestamp string     `json:"timestamp"`
-	Intent    EchoIntent `json:"intent,omitempty"`
-	Reason    string     `json:"reason,omitempty"`
-	Locale    string     `json:"locale,omitempty"`
+	Type        string     `json:"type"`
+	RequestID   string     `json:"requestId"`
+	Timestamp   string     `json:"timestamp"`
+	Intent      EchoIntent `json:"intent,omitempty"`
+	Reason      string     `json:"reason,omitempty"`
+	Locale      string     `json:"locale,omitempty"`
+	DialogState string     `json:"dialogState,omitempty"`
 }
 
 type EchoIntent struct {
-	Name  string              `json:"name"`
-	Slots map[string]EchoSlot `json:"slots"`
+	Name               string              `json:"name"`
+	Slots              map[string]EchoSlot `json:"slots"`
+	ConfirmationStatus string              `json:"confirmationStatus"`
 }
 
 type EchoSlot struct {
-	Name        string         `json:"name"`
-	Value       string         `json:"value"`
-	Resolutions EchoResolution `json:"resolutions"`
+	Name               string         `json:"name"`
+	Value              string         `json:"value"`
+	Resolutions        EchoResolution `json:"resolutions"`
+	ConfirmationStatus string         `json:"confirmationStatus"`
 }
 
 type EchoResolution struct {
@@ -261,6 +269,7 @@ type EchoRespBody struct {
 	Card             *EchoRespPayload `json:"card,omitempty"`
 	Reprompt         *EchoReprompt    `json:"reprompt,omitempty"` // Pointer so it's dropped if empty in JSON response.
 	ShouldEndSession bool             `json:"shouldEndSession"`
+	Directives       []*EchoDirective `json:"directives,omitempty"`
 }
 
 type EchoReprompt struct {
@@ -279,4 +288,9 @@ type EchoRespPayload struct {
 	SSML    string        `json:"ssml,omitempty"`
 	Content string        `json:"content,omitempty"`
 	Image   EchoRespImage `json:"image,omitempty"`
+}
+
+type EchoDirective struct {
+	Type          string      `json:"type"`
+	UpdatedIntent *EchoIntent `json:"updatedIntent,omitempty"`
 }
