@@ -3,8 +3,8 @@ package skillserver
 import (
 	"encoding/json"
 	"errors"
-	"time"
 	"github.com/mikeflynn/go-alexa/skillserver/dialog"
+	"time"
 )
 
 type ConfirmationStatus string
@@ -12,6 +12,7 @@ type ConfirmationStatus string
 const (
 	CONF_CONFIRMED ConfirmationStatus = "CONFIRMED"
 	CONF_DENIED    ConfirmationStatus = "DENIED"
+	CONF_NONE      ConfirmationStatus = "NONE"
 )
 
 // Request Functions
@@ -258,14 +259,14 @@ type EchoReqBody struct {
 type EchoIntent struct {
 	Name               string              `json:"name"`
 	Slots              map[string]EchoSlot `json:"slots"`
-	ConfirmationStatus string              `json:"confirmationStatus"`
+	ConfirmationStatus ConfirmationStatus  `json:"confirmationStatus"`
 }
 
 type EchoSlot struct {
-	Name               string         `json:"name"`
-	Value              string         `json:"value"`
-	Resolutions        EchoResolution `json:"resolutions"`
-	ConfirmationStatus string         `json:"confirmationStatus"`
+	Name               string             `json:"name"`
+	Value              string             `json:"value"`
+	Resolutions        EchoResolution     `json:"resolutions"`
+	ConfirmationStatus ConfirmationStatus `json:"confirmationStatus"`
 }
 
 type EchoResolution struct {
