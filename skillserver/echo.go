@@ -4,6 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
+	"github.com/mikeflynn/go-alexa/skillserver/dialog"
+)
+
+type ConfirmationStatus string
+
+const (
+	CONF_CONFIRMED ConfirmationStatus = "CONFIRMED"
+	CONF_DENIED    ConfirmationStatus = "DENIED"
 )
 
 // Request Functions
@@ -171,8 +179,27 @@ func (this *EchoResponse) EndSession(flag bool) *EchoResponse {
 	return this
 }
 
-func (this *EchoResponse) Dialog(name string, intent *EchoIntent) *EchoResponse {
-	this.Response.Directives = append(this.Response.Directives, &EchoDirective{Type: name, UpdatedIntent: intent})
+// Delegate/Elicit/Confirm a dialog or an entire intent with user of alexa.
+// The func takes in name of the dialog, updated intent/intent to confirm if any and optional slot value.
+// It prepares a Echo Response to be returned.
+// Multiple directives can be returned by calling the method in chain (eg. RespondToIntent(...).RespondToIntent(...)
+//, each RespondToIntent call appends the data to Directives array and will return the same at the end.
+func (this *EchoResponse) RespondToIntent(name dialog.Type, intent *EchoIntent, slot *EchoSlot) *EchoResponse {
+	directive := EchoDirective{Type: name}
+	if intent != nil && name == dialog.CONFIRM_INTENT {
+		directive.IntentToConfirm = intent.Name
+	} else {
+		directive.UpdatedIntent = intent
+	}
+
+	if slot != nil {
+		if name == dialog.ELICIT_SLOT {
+			directive.SlotToElicit = slot.Name
+		} else if name == dialog.CONFIRM_SLOT {
+			directive.SlotToConfirm = slot.Name
+		}
+	}
+	this.Response.Directives = append(this.Response.Directives, &directive)
 	return this
 }
 
@@ -291,6 +318,9 @@ type EchoRespPayload struct {
 }
 
 type EchoDirective struct {
-	Type          string      `json:"type"`
-	UpdatedIntent *EchoIntent `json:"updatedIntent,omitempty"`
+	Type            dialog.Type `json:"type"`
+	UpdatedIntent   *EchoIntent `json:"updatedIntent,omitempty"`
+	SlotToConfirm   string      `json:"slotToConfirm,omitempty"`
+	SlotToElicit    string      `json:"slotToElicit,omitempty"`
+	IntentToConfirm string      `json:"intentToConfirm,omitempty"`
 }
