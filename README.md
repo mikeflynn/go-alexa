@@ -1,5 +1,8 @@
 ## `go-alexa`: A Go toolset for creating Amazon Alexa Skills
 
+
+![build status badge](https://travis-ci.org/mikeflynn/go-alexa.svg?branch=master)
+
 [![GoDoc][1]][2]
 [![GoCard][3]][4]
 
