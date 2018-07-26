@@ -17,7 +17,8 @@ func (this *EchoRequest) VerifyTimestamp() bool {
 }
 
 func (this *EchoRequest) VerifyAppID(myAppID string) bool {
-	if this.Session.Application.ApplicationID == myAppID {
+	if this.Session.Application.ApplicationID == myAppID ||
+		this.Context.System.Application.ApplicationID == myAppID {
 		return true
 	}
 
@@ -45,15 +46,30 @@ func (this *EchoRequest) GetIntentName() string {
 }
 
 func (this *EchoRequest) GetSlotValue(slotName string) (string, error) {
-	if _, ok := this.Request.Intent.Slots[slotName]; ok {
-		return this.Request.Intent.Slots[slotName].Value, nil
+	slot, err := this.GetSlot(slotName)
+
+	if err != nil {
+		return "", err
 	}
 
-	return "", errors.New("Slot name not found.")
+	return slot.Value, nil
+}
+
+func (this *EchoRequest) GetSlot(slotName string) (EchoSlot, error) {
+	if _, ok := this.Request.Intent.Slots[slotName]; ok {
+		return this.Request.Intent.Slots[slotName], nil
+	}
+
+	return EchoSlot{}, errors.New("Slot name not found.")
 }
 
 func (this *EchoRequest) AllSlots() map[string]EchoSlot {
 	return this.Request.Intent.Slots
+}
+
+// Locale returns the locale specified in the request.
+func (this *EchoRequest) Locale() string {
+	return this.Request.Locale
 }
 
 // Response Functions
@@ -170,6 +186,7 @@ type EchoRequest struct {
 	Version string      `json:"version"`
 	Session EchoSession `json:"session"`
 	Request EchoReqBody `json:"request"`
+	Context EchoContext `json:"context"`
 }
 
 type EchoSession struct {
@@ -185,12 +202,24 @@ type EchoSession struct {
 	} `json:"user"`
 }
 
+type EchoContext struct {
+	System struct {
+		Device struct {
+			DeviceId string `json:"deviceId,omitempty"`
+		} `json:"device,omitempty"`
+		Application struct {
+			ApplicationID string `json:"applicationId,omitempty"`
+		} `json:"application,omitempty"`
+	} `json:"System,omitempty"`
+}
+
 type EchoReqBody struct {
 	Type      string     `json:"type"`
 	RequestID string     `json:"requestId"`
 	Timestamp string     `json:"timestamp"`
 	Intent    EchoIntent `json:"intent,omitempty"`
 	Reason    string     `json:"reason,omitempty"`
+	Locale    string     `json:"locale,omitempty"`
 }
 
 type EchoIntent struct {
@@ -199,8 +228,24 @@ type EchoIntent struct {
 }
 
 type EchoSlot struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
+	Name        string         `json:"name"`
+	Value       string         `json:"value"`
+	Resolutions EchoResolution `json:"resolutions"`
+}
+
+type EchoResolution struct {
+	ResolutionsPerAuthority []EchoResolutionPerAuthority `json:"resolutionsPerAuthority"`
+}
+
+type EchoResolutionPerAuthority struct {
+	Authority string `json:"authority"`
+	Status    struct {
+		Code string `json:"code"`
+	} `json:"status"`
+	Values []map[string]struct {
+		Name string `json:"name"`
+		ID   string `json:"id"`
+	} `json:"values"`
 }
 
 // Response Types

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto"
 	"crypto/rsa"
+	"crypto/tls"
 	"crypto/sha1"
 	"crypto/x509"
 	"encoding/base64"
@@ -19,16 +20,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
+	"github.com/urfave/negroni"
 )
 
 type EchoApplication struct {
-	AppID          string
-	Handler        func(http.ResponseWriter, *http.Request)
-	OnLaunch       func(*EchoRequest, *EchoResponse)
-	OnIntent       func(*EchoRequest, *EchoResponse)
-	OnSessionEnded func(*EchoRequest, *EchoResponse)
+	AppID              string
+	Handler            func(http.ResponseWriter, *http.Request)
+	OnLaunch           func(*EchoRequest, *EchoResponse)
+	OnIntent           func(*EchoRequest, *EchoResponse)
+	OnSessionEnded     func(*EchoRequest, *EchoResponse)
+	OnAudioPlayerState func(*EchoRequest, *EchoResponse)
 }
 
 type StdApplication struct {
@@ -37,6 +39,8 @@ type StdApplication struct {
 }
 
 var Applications = map[string]interface{}{}
+var RootPrefix = "/"
+var EchoPrefix = "/echo/"
 
 func Run(apps map[string]interface{}, port string) {
 	router := mux.NewRouter()
@@ -47,12 +51,46 @@ func Run(apps map[string]interface{}, port string) {
 	n.Run(":" + port)
 }
 
-func RunSSL(apps map[string]interface{}, port, cert, key string) error {
+func SetEchoPrefix(prefix string) {
+	EchoPrefix = prefix
+}
+
+func SetRootPrefix(prefix string) {
+	RootPrefix = prefix
+}
+
+// RunSSL takes in a map of application, server port, certificate and key files, and
+// tries to start a TLS server which alexa can directly pass commands to.
+// It panics out with the error if the server couldn't be started. Or else the method blocks
+// at ListenAndServeTLS line.
+// If the server starts succcessfully and there are connection errors afterwards, they are
+// logged to the stdout and no error is returned.
+// For generating a testing cert and key, read the following:
+// https://developer.amazon.com/docs/custom-skills/configure-web-service-self-signed-certificate.html
+func RunSSL(apps map[string]interface{}, port, cert, key string) {
 	router := mux.NewRouter()
 	Init(apps, router)
 
-	err := http.ListenAndServeTLS(port, cert, key, router)
-	return err
+	// This is very limited TLS configuration which is required to connect alexa to our webservice.
+	// The curve preferences are used by ECDSA/ECDHE algorithms for figuring out the matching algorithm
+	// from alexa side starting from the strongest to the weakest.
+	cfg := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			// If the connection throws errors related to crypt algorithm mismatch between server and client,
+			// this line must be replaced by constants present in crypt/tls package for the value that works.
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+		},
+	}
+	srv := &http.Server{
+		Addr:         ":" + port,
+		Handler:      router,
+		TLSConfig:    cfg,
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+	}
+	log.Fatal(srv.ListenAndServeTLS(cert, key))
 }
 
 func Init(apps map[string]interface{}, router *mux.Router) {
@@ -62,6 +100,8 @@ func Init(apps map[string]interface{}, router *mux.Router) {
 	echoRouter := mux.NewRouter()
 	// /* Endpoints
 	pageRouter := mux.NewRouter()
+
+	hasPageRouter := false
 
 	for uri, meta := range Applications {
 		switch app := meta.(type) {
@@ -82,6 +122,10 @@ func Init(apps map[string]interface{}, router *mux.Router) {
 					if app.OnSessionEnded != nil {
 						app.OnSessionEnded(echoReq, echoResp)
 					}
+				} else if strings.HasPrefix(echoReq.GetRequestType(), "AudioPlayer.") {
+					if app.OnAudioPlayerState != nil {
+						app.OnAudioPlayerState(echoReq, echoResp)
+					}
 				} else {
 					http.Error(w, "Invalid request.", http.StatusBadRequest)
 				}
@@ -97,19 +141,22 @@ func Init(apps map[string]interface{}, router *mux.Router) {
 
 			echoRouter.HandleFunc(uri, handlerFunc).Methods("POST")
 		case StdApplication:
+			hasPageRouter = true
 			pageRouter.HandleFunc(uri, app.Handler).Methods(app.Methods)
 		}
 	}
 
-	router.PathPrefix("/echo/").Handler(negroni.New(
+	router.PathPrefix(EchoPrefix).Handler(negroni.New(
 		negroni.HandlerFunc(validateRequest),
 		negroni.HandlerFunc(verifyJSON),
 		negroni.Wrap(echoRouter),
 	))
 
-	router.PathPrefix("/").Handler(negroni.New(
-		negroni.Wrap(pageRouter),
-	))
+	if hasPageRouter {
+		router.PathPrefix(RootPrefix).Handler(negroni.New(
+			negroni.Wrap(pageRouter),
+		))
+	}
 }
 
 func GetEchoRequest(r *http.Request) *EchoRequest {
