@@ -13,6 +13,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"io"
+	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -41,6 +42,7 @@ type StdApplication struct {
 var Applications = map[string]interface{}{}
 var RootPrefix = "/"
 var EchoPrefix = "/echo/"
+var insecureSkipVerify = false
 
 func Run(apps map[string]interface{}, port string) {
 	router := mux.NewRouter()
@@ -94,6 +96,11 @@ func RunSSL(apps map[string]interface{}, port, cert, key string) {
 }
 
 func Init(apps map[string]interface{}, router *mux.Router) {
+	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "Skip certificate checks for downloading from AWS")
+	flag.Parse()
+	if insecureSkipVerify {
+		log.Println("insecure skip verify, certs will not be checked")
+	}
 	Applications = apps
 
 	// /echo/* Endpoints
@@ -209,6 +216,8 @@ func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 		if !isRequestValid {
 			return
 		}
+	} else {
+		log.Println("dev mode on, skipping validation")
 	}
 
 	next(w, r)
@@ -292,10 +301,8 @@ func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
 
 func readCert(certURL string) ([]byte, error) {
 	certPool, err := x509.SystemCertPool()
-	insecureSkipVerify := false
 	if err != nil || certPool == nil {
-		log.Println("Can't open system cert pools, doing insecure skip verify instead")
-		insecureSkipVerify = true
+		log.Println("Can't open system cert pools")
 	}
 
 	tr := &http.Transport{
