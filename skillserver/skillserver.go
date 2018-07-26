@@ -206,18 +206,10 @@ func verifyJSON(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 
 // Run all mandatory Amazon security checks on the request.
 func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	// Check for debug bypass flag
-	devFlag := r.URL.Query().Get("_dev")
 
-	isDev := devFlag != ""
-
-	if !isDev {
-		isRequestValid := IsValidAlexaRequest(w, r)
-		if !isRequestValid {
-			return
-		}
-	} else {
-		log.Println("dev mode on, skipping validation")
+	isRequestValid := IsValidAlexaRequest(w, r)
+	if !isRequestValid {
+		return
 	}
 
 	next(w, r)
@@ -228,6 +220,9 @@ func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFu
 // The required steps for request validation can be found on this page:
 // https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/developing-an-alexa-skill-as-a-web-service#hosting-a-custom-skill-as-a-web-service
 func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
+	if insecureSkipVerify {
+		return true
+	}
 	certURL := r.Header.Get("SignatureCertChainUrl")
 
 	// Verify certificate URL
