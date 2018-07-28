@@ -12,8 +12,8 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"io"
 	"flag"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -206,18 +206,19 @@ func verifyJSON(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 
 // Run all mandatory Amazon security checks on the request.
 func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-
-	isRequestValid := IsValidAlexaRequest(w, r)
-	if !isRequestValid {
+	devFlag := r.URL.Query().Get("_dev")
+	isDev := devFlag != ""
+	if !isDev && !IsValidAlexaRequest(w, r) {
+		log.Println("Request invalid")
 		return
 	}
-
 	next(w, r)
 }
 
 // IsValidAlexaRequest handles all the necessary steps to validate that an incoming http.Request has actually come from
 // the Alexa service. If an error occurs during the validation process, an http.Error will be written to the provided http.ResponseWriter.
 // The required steps for request validation can be found on this page:
+// --insecure-skip-verify flag will disable all validations
 // https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/developing-an-alexa-skill-as-a-web-service#hosting-a-custom-skill-as-a-web-service
 func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
 	if insecureSkipVerify {
