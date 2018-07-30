@@ -5,13 +5,14 @@ import (
 	"context"
 	"crypto"
 	"crypto/rsa"
-	"crypto/tls"
 	"crypto/sha1"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"flag"
 	"io"
 	"io/ioutil"
 	"log"
@@ -41,6 +42,7 @@ type StdApplication struct {
 var Applications = map[string]interface{}{}
 var RootPrefix = "/"
 var EchoPrefix = "/echo/"
+var insecureSkipVerify = false
 
 func Run(apps map[string]interface{}, port string) {
 	router := mux.NewRouter()
@@ -94,6 +96,11 @@ func RunSSL(apps map[string]interface{}, port, cert, key string) {
 }
 
 func Init(apps map[string]interface{}, router *mux.Router) {
+	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "Skip certificate checks for downloading from AWS")
+	flag.Parse()
+	if insecureSkipVerify {
+		log.Println("insecure skip verify, certs will not be checked")
+	}
 	Applications = apps
 
 	// /echo/* Endpoints
@@ -107,7 +114,7 @@ func Init(apps map[string]interface{}, router *mux.Router) {
 		switch app := meta.(type) {
 		case EchoApplication:
 			handlerFunc := func(w http.ResponseWriter, r *http.Request) {
-				echoReq := r.Context().Value("echoRequest").(*EchoRequest)
+				echoReq := GetEchoRequest(r)
 				echoResp := NewEchoResponse()
 
 				if echoReq.GetRequestType() == "LaunchRequest" {
@@ -199,26 +206,24 @@ func verifyJSON(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 
 // Run all mandatory Amazon security checks on the request.
 func validateRequest(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	// Check for debug bypass flag
 	devFlag := r.URL.Query().Get("_dev")
-
 	isDev := devFlag != ""
-
-	if !isDev {
-		isRequestValid := IsValidAlexaRequest(w, r)
-		if !isRequestValid {
-			return
-		}
+	if !isDev && !IsValidAlexaRequest(w, r) {
+		log.Println("Request invalid")
+		return
 	}
-
 	next(w, r)
 }
 
 // IsValidAlexaRequest handles all the necessary steps to validate that an incoming http.Request has actually come from
 // the Alexa service. If an error occurs during the validation process, an http.Error will be written to the provided http.ResponseWriter.
 // The required steps for request validation can be found on this page:
+// --insecure-skip-verify flag will disable all validations
 // https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/developing-an-alexa-skill-as-a-web-service#hosting-a-custom-skill-as-a-web-service
 func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
+	if insecureSkipVerify {
+		return true
+	}
 	certURL := r.Header.Get("SignatureCertChainUrl")
 
 	// Verify certificate URL
@@ -291,14 +296,24 @@ func IsValidAlexaRequest(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func readCert(certURL string) ([]byte, error) {
-	cert, err := http.Get(certURL)
+	certPool, err := x509.SystemCertPool()
+	if err != nil || certPool == nil {
+		log.Println("Can't open system cert pools")
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{RootCAs: certPool, InsecureSkipVerify: insecureSkipVerify},
+	}
+	hc := &http.Client{Timeout: 2 * time.Second, Transport: tr}
+
+	cert, err := hc.Get(certURL)
 	if err != nil {
-		return nil, errors.New("Could not download Amazon cert file.")
+		return nil, errors.New("could not download Amazon cert file: " + err.Error())
 	}
 	defer cert.Body.Close()
 	certContents, err := ioutil.ReadAll(cert.Body)
 	if err != nil {
-		return nil, errors.New("Could not read Amazon cert file.")
+		return nil, errors.New("could not read Amazon cert file: " + err.Error())
 	}
 
 	return certContents, nil
