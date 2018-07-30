@@ -1,7 +1,7 @@
 ## `go-alexa`: A Go toolset for creating Amazon Alexa Skills
 
 
-![build status badge](https://travis-ci.org/mikeflynn/go-alexa.svg?branch=master)
+[![build status badge][travis-badge]][travis-job]
 
 [![GoDoc][1]][2]
 [![GoCard][3]][4]
@@ -10,6 +10,8 @@
 [2]: https://godoc.org/github.com/mikeflynn/go-alexa
 [3]: https://goreportcard.com/badge/github.com/mikeflynn/go-alexa
 [4]: https://goreportcard.com/report/github.com/mikeflynn/go-alexa
+[travis-badge]: https://travis-ci.org/mikeflynn/go-alexa.svg?branch=master
+[travis-job]: https://travis-ci.org/mikeflynn/go-alexa
 
 The Amazon Echo, with it's voice assitant Alexa, is a surprisingly amazing tool. Having the power of voice recognition tied to the web ready at any time is quite powerful and now that Amazon has opened up a developer platform it's even more exciting!
 
