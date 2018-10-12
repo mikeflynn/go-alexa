@@ -169,7 +169,7 @@ func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
 
 func jeopardyStart(echoReq *alexa.EchoRequest, session *JeopardySession) (*alexa.EchoResponse, *JeopardySession) {
 	catNames := []string{}
-	for k, _ := range JeopardyCategories {
+	for k := range JeopardyCategories {
 		catNames = append(catNames, k)
 	}
 
@@ -194,7 +194,7 @@ func jeopardyCategory(echoReq *alexa.EchoRequest, session *JeopardySession) (*al
 	_, catExists := JeopardyCategories[category]
 	if err != nil || !catExists {
 		catNames := []string{}
-		for k, _ := range JeopardyCategories {
+		for k := range JeopardyCategories {
 			catNames = append(catNames, k)
 		}
 
