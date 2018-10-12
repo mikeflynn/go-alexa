@@ -115,7 +115,7 @@ func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
 	if echoReq.GetRequestType() == "LaunchRequest" {
 		session := getJeopardySession(col, echoReq.GetSessionID())
 
-		echoResp, session := jeopardyStart(echoReq, session)
+		echoResp, _ := jeopardyStart(echoReq, session)
 
 		json, _ := echoResp.String()
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
