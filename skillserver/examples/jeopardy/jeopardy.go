@@ -17,7 +17,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-var Applications = map[string]interface{}{
+var applications = map[string]interface{}{
 	"/echo/jeopardy": alexa.EchoApplication{
 		AppID:   os.Getenv("JEOPARDY_APP_ID"),
 		Handler: EchoJeopardy,
@@ -26,9 +26,10 @@ var Applications = map[string]interface{}{
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
-	alexa.Run(Applications, "3000")
+	alexa.Run(applications, "3000")
 }
 
+// JeopardySession will contain all data needed for a single Jeopardy game session.
 type JeopardySession struct {
 	AWSID           string
 	Dollars         int
@@ -37,6 +38,7 @@ type JeopardySession struct {
 	UpdatedAt       int64
 }
 
+// JeopardyQuestion wraps the data representing a single question to be asked of the user.
 type JeopardyQuestion struct {
 	Category string
 	Question string
@@ -44,7 +46,7 @@ type JeopardyQuestion struct {
 	Value    int
 }
 
-var JeopardyCategories = map[string]int{
+var jeopardyCategories = map[string]int{
 	"food":       49,
 	"hodgepodge": 227,
 	"history":    114,
@@ -57,7 +59,7 @@ var JeopardyCategories = map[string]int{
 	"quotations": 1420,
 }
 
-var JeopardyGreetings = []string{
+var jeopardyGreetings = []string{
 	"Sure.",
 	"Lets do it!",
 	"Whatever. I'm just sitting here I guess.",
@@ -66,7 +68,7 @@ var JeopardyGreetings = []string{
 	"Lets play Jeopardy!",
 }
 
-var JeopardyCatSelect = []string{
+var jeopardyCatSelect = []string{
 	"Don't worry your pretty little head about it. Lets go with ",
 	"I'll pick ",
 	"Lets go with ",
@@ -74,7 +76,7 @@ var JeopardyCatSelect = []string{
 	"You've already failed, but lets keep going with ",
 }
 
-var JeopardyRightAnswer = []string{
+var jeopardyRightAnswer = []string{
 	"You got it! ",
 	"Nice. ",
 	"Bingo. ",
@@ -84,7 +86,7 @@ var JeopardyRightAnswer = []string{
 	"Holy crap you got it! ",
 }
 
-var JeopardyWrongAnswer = []string{
+var jeopardyWrongAnswer = []string{
 	"Nope.",
 	"Sorry, that's incorrect.",
 	"Wow, no, not even close.",
@@ -97,6 +99,8 @@ var JeopardyWrongAnswer = []string{
 // #3: Verify answer (update session total)
 // #4: Give current score and list categories.
 
+// EchoJeopardy is an HTTP handler that will accept the incoming requests to the skill
+// and return the contents of an Alexa app response to the server.
 func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
 	echoReq := alexa.GetEchoRequest(r)
 
@@ -115,7 +119,7 @@ func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
 	if echoReq.GetRequestType() == "LaunchRequest" {
 		session := getJeopardySession(col, echoReq.GetSessionID())
 
-		echoResp, session := jeopardyStart(echoReq, session)
+		echoResp, _ := jeopardyStart(echoReq, session)
 
 		json, _ := echoResp.String()
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
@@ -139,10 +143,10 @@ func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
 				echoResp, session = jeopardyAnswer(echoReq, session)
 			}
 
-			session.Update(col)
+			session.update(col)
 		case "AnswerQuestion":
 			echoResp, session = jeopardyAnswer(echoReq, session)
-			session.Update(col)
+			session.update(col)
 		case "RepeatQuestion":
 			if session.CurrentQuestion.Question != "" {
 				echoResp = alexa.NewEchoResponse().OutputSpeech(session.CurrentQuestion.Question).EndSession(false)
@@ -169,13 +173,13 @@ func EchoJeopardy(w http.ResponseWriter, r *http.Request) {
 
 func jeopardyStart(echoReq *alexa.EchoRequest, session *JeopardySession) (*alexa.EchoResponse, *JeopardySession) {
 	catNames := []string{}
-	for k, _ := range JeopardyCategories {
+	for k := range jeopardyCategories {
 		catNames = append(catNames, k)
 	}
 
 	msg := ""
 	if echoReq.GetIntentName() == "StartJeopardy" {
-		msg = JeopardyGreetings[rand.Intn(len(JeopardyGreetings))] + " Please pick one of the following categories: "
+		msg = jeopardyGreetings[rand.Intn(len(jeopardyGreetings))] + " Please pick one of the following categories: "
 	} else {
 		msg = "The categories are "
 	}
@@ -191,23 +195,23 @@ func jeopardyCategory(echoReq *alexa.EchoRequest, session *JeopardySession) (*al
 
 	// Declare the category
 	category, err := echoReq.GetSlotValue("Category")
-	_, catExists := JeopardyCategories[category]
+	_, catExists := jeopardyCategories[category]
 	if err != nil || !catExists {
 		catNames := []string{}
-		for k, _ := range JeopardyCategories {
+		for k := range jeopardyCategories {
 			catNames = append(catNames, k)
 		}
 
 		category = getRandom(catNames)
 
-		msg = msg + getRandom(JeopardyCatSelect) + category + ". "
+		msg = msg + getRandom(jeopardyCatSelect) + category + ". "
 	} else {
 		category = strings.ToLower(category)
 	}
 
-	clue, err := getJServiceClue(JeopardyCategories[category])
+	clue, err := getJServiceClue(jeopardyCategories[category])
 	if err != nil {
-		clue, err = getJServiceClue(JeopardyCategories[category])
+		clue, err = getJServiceClue(jeopardyCategories[category])
 		if err != nil {
 			echoResp := alexa.NewEchoResponse().OutputSpeech("I'm sorry, but I can't seem to get a question right now.").EndSession(true)
 			return echoResp, session
@@ -246,10 +250,10 @@ func jeopardyAnswer(echoReq *alexa.EchoRequest, session *JeopardySession) (*alex
 	}
 
 	if strings.ToLower(answer) == strings.ToLower(session.CurrentQuestion.Answer) {
-		msg += getRandom(JeopardyRightAnswer)
+		msg += getRandom(jeopardyRightAnswer)
 		session.Dollars = session.Dollars + session.CurrentQuestion.Value
 	} else {
-		msg += getRandom(JeopardyWrongAnswer) + " The correct answer was " + session.CurrentQuestion.Answer + ". "
+		msg += getRandom(jeopardyWrongAnswer) + " The correct answer was " + session.CurrentQuestion.Answer + ". "
 	}
 
 	session.NumQuestions++
@@ -284,9 +288,9 @@ func getJeopardySession(col *mgo.Collection, sessid string) *JeopardySession {
 	return user
 }
 
-func (this *JeopardySession) Update(col *mgo.Collection) error {
-	this.UpdatedAt = time.Now().Unix()
-	err := col.Update(bson.M{"awsid": this.AWSID}, this)
+func (s *JeopardySession) update(col *mgo.Collection) error {
+	s.UpdatedAt = time.Now().Unix()
+	err := col.Update(bson.M{"awsid": s.AWSID}, s)
 	if err != nil {
 		return err
 	}
@@ -294,8 +298,8 @@ func (this *JeopardySession) Update(col *mgo.Collection) error {
 	return nil
 }
 
-func (this *JeopardySession) Delete(col *mgo.Collection) error {
-	err := col.Remove(bson.M{"awsid": this.AWSID})
+func (s *JeopardySession) delete(col *mgo.Collection) error {
+	err := col.Remove(bson.M{"awsid": s.AWSID})
 	if err != nil {
 		return err
 	}
@@ -305,6 +309,7 @@ func (this *JeopardySession) Delete(col *mgo.Collection) error {
 
 // jservice
 
+// JServiceClue contains data about a question and ansewr from the jservice.
 type JServiceClue struct {
 	ID           int    `json:"id"`
 	Answer       string `json:"answer"`
@@ -345,5 +350,5 @@ func getJServiceClue(catID int) (JServiceClue, error) {
 		return clues[0], nil
 	}
 
-	return JServiceClue{}, errors.New("No clues returned.")
+	return JServiceClue{}, errors.New("no clues returned")
 }
