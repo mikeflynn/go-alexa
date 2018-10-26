@@ -67,7 +67,7 @@ Details:
 
 ### The SSL Requirement
 
-Amazon requires an SSL connection for all steps in the Skill process, even local development (which still gets requests from the Echo web service). Amazon is pushing their AWS Lamda service that takes care of SSL for you, but Go isn't an option on Lamda. What I've done personally is put Nginx in front of my Go app and let Nginx handle the SSL (a self-signed cert for development and a real cert when pushing to production). More information here on  [nginx.com](https://www.nginx.com/blog/nginx-ssl/).
+Amazon requires an SSL connection for all steps in the Skill process, even local development (which still gets requests from the Echo web service). Amazon is pushing their AWS Lamda service that takes care of SSL for you ~~but Go isn't an option on Lamda~~. What I've done personally is put Nginx in front of my Go app and let Nginx handle the SSL (a self-signed cert for development and a real cert when pushing to production). More information here on  [nginx.com](https://www.nginx.com/blog/nginx-ssl/).
 
 ### Contributors
 
