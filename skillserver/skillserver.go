@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"flag"
 	"io"
 	"io/ioutil"
 	"log"
@@ -69,10 +68,14 @@ func SetRootPrefix(prefix string) {
 }
 
 // Run will initialize the apps provided and start an HTTP server listening on the specified port.
-func Run(apps map[string]interface{}, port string) {
+// Use an optional fourth boolean parameter to indicate whether to skip AWS cert's validation
+func Run(apps map[string]interface{}, port string, insecureSkipVerify ...bool) {
 	router := mux.NewRouter()
-	initialize(apps, router)
-
+	isv := false
+	if len(insecureSkipVerify) > 0 {
+		isv = insecureSkipVerify[0]
+	}
+	initialize(apps, router, isv)
 	n := negroni.Classic()
 	n.UseHandler(router)
 	n.Run(":" + port)
@@ -86,9 +89,15 @@ func Run(apps map[string]interface{}, port string) {
 // logged to the stdout and no error is returned.
 // For generating a testing cert and key, read the following:
 // https://developer.amazon.com/docs/custom-skills/configure-web-service-self-signed-certificate.html
-func RunSSL(apps map[string]interface{}, port, cert, key string) {
+// Use an optional fourth boolean parameter to indicate whether to skip AWS cert's validation
+func RunSSL(apps map[string]interface{}, port, cert, key string, insecureSkipVerify ...bool) {
 	router := mux.NewRouter()
-	initialize(apps, router)
+
+	isv := false
+	if len(insecureSkipVerify) > 0 {
+		isv = insecureSkipVerify[0]
+	}
+	initialize(apps, router, isv)
 
 	// This is very limited TLS configuration which is required to connect alexa to our webservice.
 	// The curve preferences are used by ECDSA/ECDHE algorithms for figuring out the matching algorithm
@@ -136,10 +145,9 @@ func RunSSL(apps map[string]interface{}, port, cert, key string) {
 	log.Fatal(srv.ListenAndServeTLS(cert, key))
 }
 
-func initialize(apps map[string]interface{}, router *mux.Router) {
-	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "Skip certificate checks for downloading from AWS")
-	flag.Parse()
-	if insecureSkipVerify {
+func initialize(apps map[string]interface{}, router *mux.Router, isv bool) {
+	insecureSkipVerify = isv
+	if isv {
 		log.Println("insecure skip verify, certs will not be checked")
 	}
 	applications = apps
