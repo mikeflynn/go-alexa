@@ -67,15 +67,18 @@ func SetRootPrefix(prefix string) {
 	rootPrefix = prefix
 }
 
-// Run will initialize the apps provided and start an HTTP server listening on the specified port.
-// Use an optional fourth boolean parameter to indicate whether to skip AWS cert's validation
-func Run(apps map[string]interface{}, port string, insecureSkipVerify ...bool) {
-	router := mux.NewRouter()
-	isv := false
-	if len(insecureSkipVerify) > 0 {
-		isv = insecureSkipVerify[0]
+// SetVerifyAWSCerts allows to specify whether AWS provided certs should be verified or not
+func SetVerifyAWSCerts(doVerify bool) {
+	insecureSkipVerify = !doVerify
+	if insecureSkipVerify {
+		log.Println("insecure skip verify selected, certs will not be checked")
 	}
-	initialize(apps, router, isv)
+}
+
+// Run will initialize the apps provided and start an HTTP server listening on the specified port.
+func Run(apps map[string]interface{}, port string) {
+	router := mux.NewRouter()
+	initialize(apps, router)
 	n := negroni.Classic()
 	n.UseHandler(router)
 	n.Run(":" + port)
@@ -89,15 +92,10 @@ func Run(apps map[string]interface{}, port string, insecureSkipVerify ...bool) {
 // logged to the stdout and no error is returned.
 // For generating a testing cert and key, read the following:
 // https://developer.amazon.com/docs/custom-skills/configure-web-service-self-signed-certificate.html
-// Use an optional fourth boolean parameter to indicate whether to skip AWS cert's validation
-func RunSSL(apps map[string]interface{}, port, cert, key string, insecureSkipVerify ...bool) {
+func RunSSL(apps map[string]interface{}, port, cert, key string) {
 	router := mux.NewRouter()
 
-	isv := false
-	if len(insecureSkipVerify) > 0 {
-		isv = insecureSkipVerify[0]
-	}
-	initialize(apps, router, isv)
+	initialize(apps, router)
 
 	// This is very limited TLS configuration which is required to connect alexa to our webservice.
 	// The curve preferences are used by ECDSA/ECDHE algorithms for figuring out the matching algorithm
@@ -145,11 +143,7 @@ func RunSSL(apps map[string]interface{}, port, cert, key string, insecureSkipVer
 	log.Fatal(srv.ListenAndServeTLS(cert, key))
 }
 
-func initialize(apps map[string]interface{}, router *mux.Router, isv bool) {
-	insecureSkipVerify = isv
-	if isv {
-		log.Println("insecure skip verify, certs will not be checked")
-	}
+func initialize(apps map[string]interface{}, router *mux.Router) {
 	applications = apps
 
 	// /echo/* Endpoints
