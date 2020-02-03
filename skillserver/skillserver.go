@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"flag"
 	"io"
 	"io/ioutil"
 	"log"
@@ -68,11 +67,18 @@ func SetRootPrefix(prefix string) {
 	rootPrefix = prefix
 }
 
+// SetVerifyAWSCerts allows to specify whether AWS provided certs should be verified or not
+func SetVerifyAWSCerts(doVerify bool) {
+	insecureSkipVerify = !doVerify
+	if insecureSkipVerify {
+		log.Println("insecure skip verify selected, certs will not be checked")
+	}
+}
+
 // Run will initialize the apps provided and start an HTTP server listening on the specified port.
 func Run(apps map[string]interface{}, port string) {
 	router := mux.NewRouter()
 	initialize(apps, router)
-
 	n := negroni.Classic()
 	n.UseHandler(router)
 	n.Run(":" + port)
@@ -88,6 +94,7 @@ func Run(apps map[string]interface{}, port string) {
 // https://developer.amazon.com/docs/custom-skills/configure-web-service-self-signed-certificate.html
 func RunSSL(apps map[string]interface{}, port, cert, key string) {
 	router := mux.NewRouter()
+
 	initialize(apps, router)
 
 	// This is very limited TLS configuration which is required to connect alexa to our webservice.
@@ -137,11 +144,6 @@ func RunSSL(apps map[string]interface{}, port, cert, key string) {
 }
 
 func initialize(apps map[string]interface{}, router *mux.Router) {
-	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "Skip certificate checks for downloading from AWS")
-	flag.Parse()
-	if insecureSkipVerify {
-		log.Println("insecure skip verify, certs will not be checked")
-	}
 	applications = apps
 
 	// /echo/* Endpoints
