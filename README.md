@@ -5,6 +5,7 @@
 
 [![GoDoc][1]][2]
 [![GoCard][3]][4]
+[![Coverage Status][coveralls-badge]][coveralls-job]
 
 [1]: https://godoc.org/github.com/mikeflynn/go-alexa?status.svg
 [2]: https://godoc.org/github.com/mikeflynn/go-alexa
@@ -12,6 +13,8 @@
 [4]: https://goreportcard.com/report/github.com/mikeflynn/go-alexa
 [travis-badge]: https://travis-ci.org/mikeflynn/go-alexa.svg?branch=master
 [travis-job]: https://travis-ci.org/mikeflynn/go-alexa
+[coveralls-badge]: https://coveralls.io/repos/github/mikeflynn/go-alexa/badge.svg?branch=master
+[coveralls-job]: https://coveralls.io/github/mikeflynn/go-alexa?branch=master
 
 The Amazon Echo, with it's voice assitant Alexa, is a surprisingly amazing tool. Having the power of voice recognition tied to the web ready at any time is quite powerful and now that Amazon has opened up a developer platform it's even more exciting!
 
